@@ -1,0 +1,19 @@
+# Raw datasets
+data/raw/
+
+# Processed datasets
+data/processed/
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Environment files
+.venv/
+.env
