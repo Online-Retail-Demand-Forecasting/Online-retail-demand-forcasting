@@ -499,3 +499,4 @@ st.caption(
     "Online Retail Demand Forecasting | "
     "Data Science Project"
 )
+exit()
