@@ -124,4 +124,3 @@ st.write(
     data-driven business decisions.
     """
 )
-exit()
