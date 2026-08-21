@@ -394,25 +394,57 @@ def load_inventory_risk():
 @st.cache_data
 def load_sku_master():
 
-    # Keep the existing processed location first.
-    processed_path = os.path.join(
-        PROCESSED_PATH,
-        "sku_master.csv"
-    )
+    # Check the normal project locations first.
+    candidate_paths = [
+        os.path.join(
+            PROCESSED_PATH,
+            "sku_master.csv"
+        ),
+        os.path.join(
+            BASE_DIR,
+            "data",
+            "raw",
+            "sku_master.csv"
+        ),
+        os.path.join(
+            BASE_DIR,
+            "data1",
+            "processed",
+            "sku_master.csv"
+        ),
+        os.path.join(
+            BASE_DIR,
+            "data1",
+            "raw",
+            "sku_master.csv"
+        )
+    ]
 
-    # Also support the original/raw SKU master location.
-    raw_path = os.path.join(
-        BASE_DIR,
-        "data",
-        "raw",
-        "sku_master.csv"
-    )
+    # If the file is stored elsewhere inside the project,
+    # find it automatically.
+    for root, dirs, files in os.walk(BASE_DIR):
 
-    if os.path.exists(processed_path):
-        return pd.read_csv(processed_path)
+        if "sku_master.csv" in files:
 
-    if os.path.exists(raw_path):
-        return pd.read_csv(raw_path)
+            candidate_paths.append(
+                os.path.join(
+                    root,
+                    "sku_master.csv"
+                )
+            )
+
+    # Remove duplicate paths while preserving order.
+    checked_paths = []
+
+    for path in candidate_paths:
+
+        if path not in checked_paths:
+
+            checked_paths.append(path)
+
+            if os.path.isfile(path):
+
+                return pd.read_csv(path)
 
     return None
 
@@ -460,12 +492,53 @@ def find_column(df, possible_names):
     return None
 
 
-# Validate sales data before adding the category column.
-if sales_df is not None:
+def normalize_sku(value):
 
-    # ------------------------------------------------------------
-    # FIND SKU COLUMN IN SALES DATA
-    # ------------------------------------------------------------
+    """
+    Creates a common SKU key.
+
+    This handles:
+        SKU00001
+        sku00001
+        00001
+        1
+        1.0
+
+    so the sales data can match the SKU master reliably.
+    """
+
+    if pd.isna(value):
+        return None
+
+    value = str(value).strip().upper()
+
+    # Remove a trailing .0 caused by numeric CSV conversion.
+    if value.endswith(".0"):
+        value = value[:-2]
+
+    # If the value already contains SKU + digits,
+    # standardize it to five digits.
+    if value.startswith("SKU"):
+
+        digits = value[3:]
+
+        if digits.isdigit():
+
+            return "SKU" + digits.zfill(5)
+
+    # If the value is only numeric, convert it to SKU00001 format.
+    if value.isdigit():
+
+        return "SKU" + value.zfill(5)
+
+    return value
+
+
+# ============================================================
+# BUILD CATEGORY MAPPING
+# ============================================================
+
+if sales_df is not None:
 
     sales_sku_col = find_column(
         sales_df,
@@ -477,110 +550,106 @@ if sales_df is not None:
         ]
     )
 
-    # ------------------------------------------------------------
-    # CONNECT CATEGORY FROM SKU MASTER
-    # ------------------------------------------------------------
+    master_sku_col = find_column(
+        sku_master_df,
+        [
+            "sku_id",
+            "sku",
+            "product_id",
+            "product_code"
+        ]
+    )
 
-    if sku_master_df is not None and sales_sku_col is not None:
+    category_col = find_column(
+        sku_master_df,
+        [
+            "category",
+            "product_category",
+            "category_name"
+        ]
+    )
 
-        master_sku_col = find_column(
-            sku_master_df,
-            [
-                "sku_id",
-                "sku",
-                "product_id",
-                "product_code"
-            ]
+    # Remove an old category column if the sales file already
+    # contains one. The SKU master is the authoritative source.
+    sales_df.drop(
+        columns=["category"],
+        inplace=True,
+        errors="ignore"
+    )
+
+    if (
+        sku_master_df is not None
+        and sales_sku_col is not None
+        and master_sku_col is not None
+        and category_col is not None
+    ):
+
+        # Create normalized SKU keys.
+        sales_keys = sales_df[sales_sku_col].map(
+            normalize_sku
         )
 
-        category_col = find_column(
-            sku_master_df,
-            [
-                "category",
-                "product_category",
-                "category_name"
-            ]
+        master_keys = sku_master_df[master_sku_col].map(
+            normalize_sku
         )
 
-        if (
-            master_sku_col is not None
-            and category_col is not None
-        ):
+        # Create a clean SKU -> Category lookup.
+        sku_category_lookup = pd.DataFrame(
+            {
+                "_sku_key": master_keys,
+                "_category_value":
+                    sku_master_df[category_col]
+            }
+        )
 
-            # Make a small lookup table containing only SKU and category.
-            sku_lookup = sku_master_df[
-                [
-                    master_sku_col,
-                    category_col
-                ]
-            ].copy()
+        sku_category_lookup["_category_value"] = (
+            sku_category_lookup["_category_value"]
+            .astype("string")
+            .str.strip()
+        )
 
-            # Normalize both SKU columns so values such as
-            # "SKU04551" and " sku04551 " match correctly.
-            sales_df["_sku_key"] = (
-                sales_df[sales_sku_col]
-                .astype(str)
-                .str.strip()
-                .str.upper()
+        # Ignore empty SKU/category records.
+        sku_category_lookup = (
+            sku_category_lookup[
+                sku_category_lookup["_sku_key"].notna()
+            ]
+            .dropna(
+                subset=["_category_value"]
             )
-
-            sku_lookup["_sku_key"] = (
-                sku_lookup[master_sku_col]
-                .astype(str)
-                .str.strip()
-                .str.upper()
+            .drop_duplicates(
+                subset="_sku_key",
+                keep="first"
             )
+        )
 
-            # Keep one category record per SKU.
-            sku_lookup = (
-                sku_lookup[
-                    [
-                        "_sku_key",
-                        category_col
-                    ]
-                ]
-                .drop_duplicates(
-                    subset="_sku_key"
-                )
+        # Convert the lookup into a dictionary.
+        category_lookup = dict(
+            zip(
+                sku_category_lookup["_sku_key"],
+                sku_category_lookup["_category_value"]
             )
+        )
 
-            # Add category to the sales data.
-            sales_df = sales_df.merge(
-                sku_lookup,
-                on="_sku_key",
-                how="left"
-            )
+        # Map every sales SKU to its real category.
+        sales_df["category"] = (
+            sales_keys
+            .map(category_lookup)
+            .fillna("Uncategorized")
+            .astype(str)
+            .str.strip()
+        )
 
-            # Create the final category column.
-            sales_df["category"] = (
-                sales_df[category_col]
-                .fillna("Uncategorized")
-                .astype(str)
-                .str.strip()
-            )
-
-            # Treat blank category values as Uncategorized.
-            sales_df.loc[
-                sales_df["category"].eq(""),
-                "category"
-            ] = "Uncategorized"
-
-            # Remove temporary columns.
-            sales_df.drop(
-                columns=[
-                    "_sku_key",
-                    category_col
-                ],
-                inplace=True,
-                errors="ignore"
-            )
-
-        else:
-
-            sales_df["category"] = "Uncategorized"
+        # Treat blank values as Uncategorized.
+        sales_df.loc[
+            sales_df["category"].eq("")
+            | sales_df["category"].eq("nan"),
+            "category"
+        ] = "Uncategorized"
 
     else:
 
+        # Keep the dashboard running if the master file
+        # cannot be found or does not contain the required columns.
         sales_df["category"] = "Uncategorized"
 
 # ============================================================
