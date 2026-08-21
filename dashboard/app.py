@@ -1,238 +1,103 @@
 # ============================================================
 # RETAIL EXECUTIVE DASHBOARD
-# Sales Performance • Demand Forecasting • Inventory Intelligence
+# ============================================================
+# Sections:
+# 1. Executive Summary
+# 2. Sales Trend
+# 3. Sales by Channel
+# 4. Sales by Category
+# 5. Store-wise Sales
+# 6. Demand Analysis
+# 7. Actual vs Forecast
+# 8. Year-wise Sales
+# 9. Inventory Risk
+# 10. Top Products
 # ============================================================
 
 import os
-from pathlib import Path
+import glob
+import warnings
 
-import streamlit as st
+import numpy as np
 import pandas as pd
+import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
+warnings.filterwarnings("ignore")
+
 
 # ============================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # ============================================================
 
 st.set_page_config(
     page_title="Retail Executive Dashboard",
-    page_icon="🛍️",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 
 # ============================================================
-# PROFESSIONAL DASHBOARD THEME
+# CUSTOM CSS
 # ============================================================
 
 st.markdown(
     """
     <style>
 
-    /* ========================================================
-       GLOBAL
-       ======================================================== */
-
-    .stApp {
-        background: #F6F8FB;
+    .main {
+        background-color: #f7f8fc;
     }
 
-    .main .block-container {
-        padding-top: 1.8rem;
+    .block-container {
+        padding-top: 1.5rem;
         padding-bottom: 2rem;
-        max-width: 1500px;
     }
 
-
-    /* ========================================================
-       HEADER
-       ======================================================== */
-
-    .header-box {
-        background: linear-gradient(
-            135deg,
-            #0F2747 0%,
-            #183B63 100%
-        );
-
-        padding: 28px 32px;
-
-        border-radius: 14px;
-
-        margin-bottom: 28px;
-
-        box-shadow:
-            0 6px 18px
-            rgba(15, 39, 71, 0.12);
+    .dashboard-title {
+        font-size: 36px;
+        font-weight: 800;
+        color: #1f2937;
+        margin-bottom: 3px;
     }
 
-    .main-title {
-        font-size: 32px;
+    .dashboard-subtitle {
+        font-size: 16px;
+        color: #6b7280;
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-size: 24px;
         font-weight: 700;
-        color: #FFFFFF;
-        margin-bottom: 6px;
-        letter-spacing: -0.5px;
+        color: #1f2937;
+        margin-top: 15px;
+        margin-bottom: 15px;
     }
 
-    .main-subtitle {
-        font-size: 15px;
-        color: #DCE8F5;
-        line-height: 1.5;
+    .info-box {
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #eef2ff;
+        border-left: 5px solid #6366f1;
+        margin-bottom: 15px;
     }
 
-
-    /* ========================================================
-       SECTION HEADINGS
-       ======================================================== */
-
-    .section-header {
-        font-size: 21px;
-
-        font-weight: 700;
-
-        color: #17324D;
-
-        margin-top: 8px;
-
-        margin-bottom: 14px;
-
-        padding-bottom: 9px;
-
-        border-bottom:
-            2px solid #DCE3EB;
+    .warning-box {
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #fff7ed;
+        border-left: 5px solid #f97316;
+        margin-bottom: 15px;
     }
-
-
-    /* ========================================================
-       KPI CARDS
-       ======================================================== */
 
     div[data-testid="stMetric"] {
-        background: #FFFFFF;
-
-        border:
-            1px solid #E2E8F0;
-
+        background-color: white;
+        padding: 15px;
         border-radius: 12px;
-
-        padding: 16px 18px;
-
-        box-shadow:
-            0 3px 10px
-            rgba(15, 39, 71, 0.05);
-
-        transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease;
-    }
-
-    div[data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-
-        box-shadow:
-            0 7px 18px
-            rgba(15, 39, 71, 0.10);
-    }
-
-    div[data-testid="stMetricLabel"] {
-        color: #64748B !important;
-
-        font-size: 13px !important;
-
-        font-weight: 600 !important;
-    }
-
-    div[data-testid="stMetricValue"] {
-        color: #17324D !important;
-
-        font-size: 23px !important;
-
-        font-weight: 700 !important;
-    }
-
-
-    /* ========================================================
-       SIDEBAR
-       ======================================================== */
-
-    section[data-testid="stSidebar"] {
-        background: #FFFFFF;
-
-        border-right:
-            1px solid #E2E8F0;
-    }
-
-    section[data-testid="stSidebar"]
-    .block-container {
-        padding-top: 2rem;
-    }
-
-
-    /* ========================================================
-       PLOTLY CHART CONTAINER
-       ======================================================== */
-
-    div[data-testid="stPlotlyChart"] {
-        background: #FFFFFF;
-
-        border:
-            1px solid #E2E8F0;
-
-        border-radius: 12px;
-
-        padding: 7px;
-
-        box-shadow:
-            0 3px 10px
-            rgba(15, 39, 71, 0.04);
-    }
-
-
-    /* ========================================================
-       DATAFRAME
-       ======================================================== */
-
-    div[data-testid="stDataFrame"] {
-        border-radius: 10px;
-    }
-
-
-    /* ========================================================
-       FOOTER
-       ======================================================== */
-
-    .dashboard-footer {
-        text-align: center;
-
-        color: #718096;
-
-        font-size: 12px;
-
-        padding: 18px 0 4px 0;
-
-        border-top:
-            1px solid #DCE3EB;
-
-        margin-top: 28px;
-    }
-
-
-    /* ========================================================
-       RESPONSIVE
-       ======================================================== */
-
-    @media (max-width: 900px) {
-
-        .main-title {
-            font-size: 26px;
-        }
-
-        .header-box {
-            padding: 22px;
-        }
+        border: 1px solid #e5e7eb;
     }
 
     </style>
@@ -242,148 +107,235 @@ st.markdown(
 
 
 # ============================================================
-# PROJECT PATHS
+# FIND PROJECT DIRECTORY
 # ============================================================
 
-# Current Python file location
-CURRENT_DIR = Path(__file__).resolve().parent
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Project root candidates
-PROJECT_ROOTS = [
-    CURRENT_DIR,
-    CURRENT_DIR.parent,
-    CURRENT_DIR.parent.parent,
+
+# ============================================================
+# POSSIBLE DATA FOLDERS
+# ============================================================
+
+DATA_PATHS = [
+    os.path.join(BASE_DIR, "data"),
+    os.path.join(BASE_DIR, "Data"),
+    os.path.join(os.getcwd(), "data"),
+    os.path.join(os.getcwd(), "Data"),
 ]
 
-# Remove duplicates
-PROJECT_ROOTS = list(dict.fromkeys(PROJECT_ROOTS))
+
+def find_data_folder():
+
+    for folder in DATA_PATHS:
+
+        if os.path.exists(folder):
+            return folder
+
+    return os.path.join(BASE_DIR, "data")
+
+
+DATA_PATH = find_data_folder()
 
 
 # ============================================================
-# FIND FILE FUNCTION
+# FIND FILE
 # ============================================================
 
-def find_file(filename):
-    """
-    Searches common project locations recursively.
+def find_file(file_names):
 
-    This prevents problems when files are located in:
-        data/processed/
-        data/
-        project/data/processed/
-        etc.
-    """
+    # Exact search
+    for folder in DATA_PATHS:
 
-    for root in PROJECT_ROOTS:
-
-        if not root.exists():
+        if not os.path.exists(folder):
             continue
 
-        # First check direct location
-        direct_path = root / filename
+        for file_name in file_names:
 
-        if direct_path.exists():
-            return direct_path
+            path = os.path.join(folder, file_name)
 
-        # Then search recursively
-        try:
+            if os.path.exists(path):
+                return path
 
-            matches = list(
-                root.rglob(filename)
+    # Recursive search
+    for folder in DATA_PATHS:
+
+        if not os.path.exists(folder):
+            continue
+
+        for file_name in file_names:
+
+            matches = glob.glob(
+                os.path.join(folder, "**", file_name),
+                recursive=True
             )
 
             if matches:
                 return matches[0]
 
-        except Exception:
-            pass
-
     return None
 
 
 # ============================================================
-# DATA LOADING FUNCTIONS
+# LOAD CSV SAFELY
 # ============================================================
 
-@st.cache_data
-def load_csv(filename):
+def safe_read_csv(file_path):
 
-    path = find_file(filename)
-
-    if path is None:
-        return None, None
+    if file_path is None:
+        return None
 
     try:
 
-        df = pd.read_csv(path)
-
-        return df, str(path)
+        return pd.read_csv(file_path)
 
     except Exception as e:
 
         st.error(
-            f"Error reading {filename}: {e}"
+            f"Unable to read {os.path.basename(file_path)}: {e}"
         )
 
-        return None, str(path)
+        return None
 
 
 # ============================================================
-# LOAD DATASETS
+# LOAD SALES DATA
 # ============================================================
 
-sales_df, sales_path = load_csv(
-    "sales_transactions_cleaned.csv"
-)
+@st.cache_data
+def load_sales():
 
-demand_df, demand_path = load_csv(
-    "daily_demand_features.csv"
-)
+    file_names = [
+        "sales_daily.csv",
+        "sales_transactions_cleaned.csv",
+        "sales_transactions.csv",
+        "sales.csv",
+        "daily_sales.csv"
+    ]
 
-forecast_df, forecast_path = load_csv(
-    "demand_forecast_results.csv"
-)
+    file_path = find_file(file_names)
 
-inventory_df, inventory_path = load_csv(
-    "inventory_risk_scoring.csv"
-)
+    if file_path is None:
+        return None, None
 
-sku_master_df, sku_master_path = load_csv(
-    "sku_master.csv"
-)
+    return safe_read_csv(file_path), file_path
 
 
 # ============================================================
-# VALIDATE MAIN DATASET
+# LOAD INVENTORY
 # ============================================================
 
-if sales_df is None:
+@st.cache_data
+def load_inventory():
+
+    file_names = [
+        "inventory_snapshots.csv",
+        "inventory.csv",
+        "inventory_data.csv"
+    ]
+
+    file_path = find_file(file_names)
+
+    if file_path is None:
+        return None, None
+
+    return safe_read_csv(file_path), file_path
+
+
+# ============================================================
+# LOAD SKU MASTER
+# ============================================================
+
+@st.cache_data
+def load_sku_master():
+
+    file_names = [
+        "sku_master.csv",
+        "product_master.csv",
+        "products.csv",
+        "sku.csv"
+    ]
+
+    file_path = find_file(file_names)
+
+    if file_path is None:
+        return None, None
+
+    return safe_read_csv(file_path), file_path
+
+
+# ============================================================
+# LOAD DATA
+# ============================================================
+
+sales_raw, sales_file = load_sales()
+
+inventory_raw, inventory_file = load_inventory()
+
+sku_raw, sku_file = load_sku_master()
+
+
+# ============================================================
+# SALES FILE ERROR
+# ============================================================
+
+if sales_raw is None:
 
     st.error(
-        "sales_transactions_cleaned.csv could not be found."
+        "Sales data could not be loaded."
     )
 
-    st.info(
-        "Make sure the file exists somewhere inside your project."
+    st.markdown(
+        f"""
+        <div class="warning-box">
+
+        <b>Sales file was not found.</b>
+
+        <br><br>
+
+        The dashboard searches for:
+
+        <br><br>
+
+        sales_daily.csv<br>
+        sales_transactions_cleaned.csv<br>
+        sales_transactions.csv<br>
+        sales.csv<br>
+        daily_sales.csv
+
+        <br><br>
+
+        <b>Data folder being searched:</b>
+
+        <br>
+
+        {DATA_PATH}
+
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     st.stop()
 
 
 # ============================================================
-# HELPER: FIND COLUMN
+# COLUMN FINDER
 # ============================================================
 
-def find_column(df, possible_names):
+def find_column(df, candidates):
 
     if df is None:
         return None
 
-    normalized = {}
+    columns = list(df.columns)
 
-    for col in df.columns:
+    # Exact normalized match
+    normalized_columns = {}
 
-        key = (
+    for col in columns:
+
+        normalized = (
             str(col)
             .strip()
             .lower()
@@ -391,636 +343,377 @@ def find_column(df, possible_names):
             .replace("-", "_")
         )
 
-        normalized[key] = col
+        normalized_columns[normalized] = col
 
-    for name in possible_names:
+    for candidate in candidates:
 
-        key = (
-            str(name)
+        normalized_candidate = (
+            str(candidate)
             .strip()
             .lower()
             .replace(" ", "_")
             .replace("-", "_")
         )
 
-        if key in normalized:
-            return normalized[key]
+        if normalized_candidate in normalized_columns:
+
+            return normalized_columns[
+                normalized_candidate
+            ]
+
+    # Partial match
+    for col in columns:
+
+        clean_col = (
+            str(col)
+            .strip()
+            .lower()
+            .replace(" ", "_")
+            .replace("-", "_")
+        )
+
+        for candidate in candidates:
+
+            clean_candidate = (
+                str(candidate)
+                .strip()
+                .lower()
+                .replace(" ", "_")
+                .replace("-", "_")
+            )
+
+            if clean_candidate in clean_col:
+
+                return col
 
     return None
 
 
 # ============================================================
-# DATE CONVERSION
+# STANDARDIZE SALES DATA
 # ============================================================
 
-date_col = find_column(
-    sales_df,
-    [
-        "date",
-        "transaction_date",
-        "sales_date"
-    ]
-)
+def standardize_sales(df):
 
-if date_col is not None:
+    df = df.copy()
 
-    sales_df["date"] = pd.to_datetime(
-        sales_df[date_col],
-        errors="coerce"
-    )
+    # --------------------------------------------------------
+    # DATE
+    # --------------------------------------------------------
 
-else:
-
-    sales_df["date"] = pd.NaT
-
-
-# Demand date
-
-if demand_df is not None:
-
-    demand_date_col = find_column(
-        demand_df,
+    date_col = find_column(
+        df,
         [
             "date",
+            "sales_date",
             "transaction_date",
-            "sales_date"
+            "order_date",
+            "day",
+            "datetime",
+            "timestamp"
         ]
     )
 
-    if demand_date_col is not None:
+    if date_col is not None:
 
-        demand_df["date"] = pd.to_datetime(
-            demand_df[demand_date_col],
+        df["Date"] = pd.to_datetime(
+            df[date_col],
             errors="coerce"
         )
 
+    else:
 
-# Forecast date
+        df["Date"] = pd.NaT
 
-if forecast_df is not None:
 
-    forecast_date_col = find_column(
-        forecast_df,
+    # --------------------------------------------------------
+    # SALES / REVENUE
+    # --------------------------------------------------------
+
+    sales_col = find_column(
+        df,
         [
-            "date",
-            "transaction_date",
-            "sales_date"
+            "sales",
+            "revenue",
+            "sales_amount",
+            "total_sales",
+            "total_revenue",
+            "amount",
+            "net_sales",
+            "gmv"
         ]
     )
 
-    if forecast_date_col is not None:
+    if sales_col is not None:
 
-        forecast_df["date"] = pd.to_datetime(
-            forecast_df[forecast_date_col],
+        df["Sales"] = pd.to_numeric(
+            df[sales_col],
             errors="coerce"
+        ).fillna(0)
+
+    else:
+
+        # If sales is not present, try quantity × price
+        quantity_temp = find_column(
+            df,
+            [
+                "quantity",
+                "qty",
+                "units",
+                "units_sold",
+                "demand"
+            ]
         )
 
-
-# ============================================================
-# YEAR COLUMN
-# ============================================================
-
-existing_year_col = find_column(
-    sales_df,
-    [
-        "year"
-    ]
-)
-
-if existing_year_col is not None:
-
-    sales_df["year"] = pd.to_numeric(
-        sales_df[existing_year_col],
-        errors="coerce"
-    )
-
-elif "date" in sales_df.columns:
-
-    sales_df["year"] = (
-        sales_df["date"]
-        .dt.year
-    )
-
-else:
-
-    sales_df["year"] = None
-
-
-# ============================================================
-# STANDARDIZE IMPORTANT SALES COLUMNS
-# ============================================================
-
-# Total value
-
-total_value_col = find_column(
-    sales_df,
-    [
-        "total_value",
-        "total_sales",
-        "sales",
-        "amount",
-        "revenue"
-    ]
-)
-
-if total_value_col is not None:
-
-    if total_value_col != "total_value":
-
-        sales_df["total_value"] = sales_df[
-            total_value_col
-        ]
-
-    sales_df["total_value"] = pd.to_numeric(
-        sales_df["total_value"],
-        errors="coerce"
-    ).fillna(0)
-
-else:
-
-    sales_df["total_value"] = 0
-
-
-# Quantity
-
-quantity_col = find_column(
-    sales_df,
-    [
-        "quantity",
-        "qty",
-        "units_sold"
-    ]
-)
-
-if quantity_col is not None:
-
-    if quantity_col != "quantity":
-
-        sales_df["quantity"] = sales_df[
-            quantity_col
-        ]
-
-    sales_df["quantity"] = pd.to_numeric(
-        sales_df["quantity"],
-        errors="coerce"
-    ).fillna(0)
-
-else:
-
-    sales_df["quantity"] = 0
-
-
-# ============================================================
-# STANDARDIZE SKU
-# ============================================================
-
-sales_sku_col = find_column(
-    sales_df,
-    [
-        "sku_id",
-        "sku",
-        "product_id",
-        "product_code",
-        "product"
-    ]
-)
-
-if sales_sku_col is not None:
-
-    if sales_sku_col != "sku_id":
-
-        sales_df["sku_id"] = (
-            sales_df[sales_sku_col]
+        price_temp = find_column(
+            df,
+            [
+                "price",
+                "unit_price",
+                "selling_price"
+            ]
         )
 
-else:
+        if quantity_temp and price_temp:
 
-    sales_df["sku_id"] = None
+            df["Sales"] = (
+                pd.to_numeric(
+                    df[quantity_temp],
+                    errors="coerce"
+                ).fillna(0)
+                *
+                pd.to_numeric(
+                    df[price_temp],
+                    errors="coerce"
+                ).fillna(0)
+            )
 
+        else:
 
-# ============================================================
-# STANDARDIZE CHANNEL
-# ============================================================
-
-channel_col = find_column(
-    sales_df,
-    [
-        "channel",
-        "sales_channel",
-        "order_channel"
-    ]
-)
-
-if channel_col is not None:
-
-    if channel_col != "channel":
-
-        sales_df["channel"] = (
-            sales_df[channel_col]
-        )
-
-    sales_df["channel"] = (
-        sales_df["channel"]
-        .astype(str)
-        .str.strip()
-    )
-
-else:
-
-    sales_df["channel"] = "Unknown"
+            df["Sales"] = 0
 
 
-# ============================================================
-# STANDARDIZE STORE
-# ============================================================
+    # --------------------------------------------------------
+    # QUANTITY
+    # --------------------------------------------------------
 
-store_col = find_column(
-    sales_df,
-    [
-        "store_id",
-        "store",
-        "store_code",
-        "location_id"
-    ]
-)
-
-if store_col is not None:
-
-    if store_col != "store_id":
-
-        sales_df["store_id"] = (
-            sales_df[store_col]
-        )
-
-else:
-
-    sales_df["store_id"] = None
-
-
-# ============================================================
-# STANDARDIZE RECEIPT
-# ============================================================
-
-receipt_col = find_column(
-    sales_df,
-    [
-        "receipt_id",
-        "receipt",
-        "transaction_id",
-        "invoice_id",
-        "order_id"
-    ]
-)
-
-if receipt_col is not None:
-
-    if receipt_col != "receipt_id":
-
-        sales_df["receipt_id"] = (
-            sales_df[receipt_col]
-        )
-
-else:
-
-    sales_df["receipt_id"] = (
-        sales_df.index.astype(str)
-    )
-
-
-# ============================================================
-# CATEGORY CREATION
-# ============================================================
-
-# IMPORTANT:
-#
-# Priority:
-#
-# 1. Category already present in sales file
-# 2. Category from sku_master.csv
-# 3. Uncategorized
-#
-# This prevents the entire dashboard becoming
-# "Uncategorized" unnecessarily.
-# ============================================================
-
-sales_category_col = find_column(
-    sales_df,
-    [
-        "category",
-        "product_category",
-        "category_name",
-        "product_type",
-        "department"
-    ]
-)
-
-
-# ------------------------------------------------------------
-# CASE 1:
-# Category already exists in sales data
-# ------------------------------------------------------------
-
-if sales_category_col is not None:
-
-    sales_df["category"] = (
-        sales_df[sales_category_col]
-        .fillna("Uncategorized")
-        .astype(str)
-        .str.strip()
-    )
-
-    sales_df["category"] = (
-        sales_df["category"]
-        .replace(
-            {
-                "",
-                "nan",
-                "None",
-                "null",
-                "NaN"
-            },
-            "Uncategorized"
-        )
-    )
-
-
-# ------------------------------------------------------------
-# CASE 2:
-# Need to merge from SKU master
-# ------------------------------------------------------------
-
-elif sku_master_df is not None:
-
-    master_sku_col = find_column(
-        sku_master_df,
+    quantity_col = find_column(
+        df,
         [
-            "sku_id",
-            "sku",
+            "quantity",
+            "qty",
+            "units",
+            "units_sold",
+            "sales_quantity",
+            "demand",
+            "volume"
+        ]
+    )
+
+    if quantity_col is not None:
+
+        df["Quantity"] = pd.to_numeric(
+            df[quantity_col],
+            errors="coerce"
+        ).fillna(0)
+
+    else:
+
+        df["Quantity"] = 0
+
+
+    # --------------------------------------------------------
+    # PRODUCT
+    # --------------------------------------------------------
+
+    product_col = find_column(
+        df,
+        [
             "product_id",
+            "product",
+            "sku",
+            "sku_id",
+            "item_id",
             "product_code",
-            "product"
+            "item"
         ]
     )
 
-    master_category_col = find_column(
-        sku_master_df,
+    if product_col is not None:
+
+        df["Product"] = (
+            df[product_col]
+            .astype(str)
+            .replace("nan", "Unknown")
+        )
+
+    else:
+
+        df["Product"] = "Unknown"
+
+
+    # --------------------------------------------------------
+    # CATEGORY
+    # --------------------------------------------------------
+
+    category_col = find_column(
+        df,
         [
             "category",
             "product_category",
             "category_name",
-            "product_type",
-            "department"
+            "department",
+            "product_type"
         ]
     )
 
+    if category_col is not None:
 
-    if (
-        master_sku_col is not None
-        and master_category_col is not None
-    ):
-
-        # Create normalized keys
-
-        sales_df["_sku_key"] = (
-            sales_df["sku_id"]
+        df["Category"] = (
+            df[category_col]
             .astype(str)
-            .str.strip()
-            .str.upper()
+            .replace("nan", "Unknown")
         )
-
-
-        sku_lookup = sku_master_df[
-            [
-                master_sku_col,
-                master_category_col
-            ]
-        ].copy()
-
-
-        sku_lookup["_sku_key"] = (
-            sku_lookup[master_sku_col]
-            .astype(str)
-            .str.strip()
-            .str.upper()
-        )
-
-
-        # Clean categories
-
-        sku_lookup[master_category_col] = (
-            sku_lookup[master_category_col]
-            .fillna("Uncategorized")
-            .astype(str)
-            .str.strip()
-        )
-
-
-        sku_lookup[master_category_col] = (
-            sku_lookup[master_category_col]
-            .replace(
-                {
-                    "",
-                    "nan",
-                    "None",
-                    "null",
-                    "NaN"
-                },
-                "Uncategorized"
-            )
-        )
-
-
-        # Remove duplicate SKU mappings
-
-        sku_lookup = (
-            sku_lookup[
-                [
-                    "_sku_key",
-                    master_category_col
-                ]
-            ]
-            .drop_duplicates(
-                subset="_sku_key",
-                keep="first"
-            )
-        )
-
-
-        # Merge
-
-        sales_df = sales_df.merge(
-            sku_lookup,
-            on="_sku_key",
-            how="left"
-        )
-
-
-        # Create category
-
-        sales_df["category"] = (
-            sales_df[master_category_col]
-            .fillna("Uncategorized")
-            .astype(str)
-            .str.strip()
-        )
-
-
-        # Remove temporary columns
-
-        sales_df.drop(
-            columns=[
-                "_sku_key",
-                master_category_col
-            ],
-            inplace=True,
-            errors="ignore"
-        )
-
 
     else:
 
-        sales_df["category"] = "Uncategorized"
+        df["Category"] = "Unknown"
 
 
-# ------------------------------------------------------------
-# CASE 3:
-# SKU master does not exist
-# ------------------------------------------------------------
+    # --------------------------------------------------------
+    # CHANNEL
+    # --------------------------------------------------------
 
-else:
-
-    sales_df["category"] = "Uncategorized"
-
-
-# ============================================================
-# CATEGORY CLEANING
-# ============================================================
-
-sales_df["category"] = (
-    sales_df["category"]
-    .fillna("Uncategorized")
-    .astype(str)
-    .str.strip()
-)
-
-
-sales_df.loc[
-    sales_df["category"].isin(
+    channel_col = find_column(
+        df,
         [
-            "",
-            "nan",
-            "NaN",
-            "None",
-            "null"
+            "channel",
+            "sales_channel",
+            "order_channel",
+            "sales_type",
+            "platform",
+            "source"
         ]
-    ),
-    "category"
-] = "Uncategorized"
-
-
-# ============================================================
-# PROFESSIONAL PLOTLY STYLE
-# ============================================================
-
-def style_chart(
-    fig,
-    height=None
-):
-
-    fig.update_layout(
-
-        template="plotly_white",
-
-        font=dict(
-            family="Arial",
-            size=12,
-            color="#334155"
-        ),
-
-        title_font=dict(
-            family="Arial",
-            size=16,
-            color="#17324D"
-        ),
-
-        paper_bgcolor="#FFFFFF",
-
-        plot_bgcolor="#FFFFFF",
-
-        margin=dict(
-            l=55,
-            r=35,
-            t=65,
-            b=50
-        ),
-
-        hoverlabel=dict(
-            bgcolor="white",
-            font_size=12,
-            font_family="Arial"
-        ),
-
-        legend=dict(
-            bgcolor="rgba(255,255,255,0)",
-            borderwidth=0
-        ),
-
-        hovermode="closest"
     )
 
+    if channel_col is not None:
 
-    if height is not None:
-
-        fig.update_layout(
-            height=height
+        df["Channel"] = (
+            df[channel_col]
+            .astype(str)
+            .replace("nan", "Unknown")
         )
 
+    else:
 
-    fig.update_xaxes(
+        df["Channel"] = "Unknown"
 
-        showgrid=True,
 
-        gridcolor="#E8EDF3",
+    # --------------------------------------------------------
+    # STORE
+    # --------------------------------------------------------
 
-        zeroline=False,
-
-        linecolor="#D5DDE6"
+    store_col = find_column(
+        df,
+        [
+            "store",
+            "store_id",
+            "store_name",
+            "location",
+            "branch",
+            "shop",
+            "outlet"
+        ]
     )
 
+    if store_col is not None:
 
-    fig.update_yaxes(
+        df["Store"] = (
+            df[store_col]
+            .astype(str)
+            .replace("nan", "Unknown")
+        )
 
-        showgrid=True,
+    else:
 
-        gridcolor="#E8EDF3",
+        df["Store"] = "Unknown"
 
-        zeroline=False,
 
-        linecolor="#D5DDE6"
+    # --------------------------------------------------------
+    # CLEAN DATE
+    # --------------------------------------------------------
+
+    df = df.dropna(
+        subset=["Date"]
     )
 
+    # --------------------------------------------------------
+    # TIME FEATURES
+    # --------------------------------------------------------
 
-    return fig
+    if not df.empty:
+
+        df["Year"] = df["Date"].dt.year
+
+        df["Month"] = df["Date"].dt.month
+
+        df["Month_Name"] = (
+            df["Date"]
+            .dt.strftime("%b")
+        )
+
+        df["Week"] = (
+            df["Date"]
+            .dt.isocalendar()
+            .week
+            .astype(int)
+        )
+
+        df["Day"] = df["Date"].dt.day
+
+        df["Weekday"] = (
+            df["Date"]
+            .dt.day_name()
+        )
+
+    return df
 
 
 # ============================================================
-# DASHBOARD HEADER
+# STANDARDIZE
+# ============================================================
+
+sales = standardize_sales(sales_raw)
+
+
+# ============================================================
+# HANDLE EMPTY DATA
+# ============================================================
+
+if sales.empty:
+
+    st.error(
+        "The sales file was found, but no valid sales records were available."
+    )
+
+    st.stop()
+
+
+# ============================================================
+# HEADER
 # ============================================================
 
 st.markdown(
-    """
-    <div class="header-box">
+    '<div class="dashboard-title">'
+    'Retail Executive Dashboard'
+    '</div>',
+    unsafe_allow_html=True
+)
 
-        <div class="main-title">
-            Retail Executive Dashboard
-        </div>
-
-        <div class="main-subtitle">
-            Sales Performance • Demand Forecasting • Inventory Intelligence
-        </div>
-
-    </div>
-    """,
+st.markdown(
+    '<div class="dashboard-subtitle">'
+    'Sales Performance • Demand Forecasting • Inventory Intelligence'
+    '</div>',
     unsafe_allow_html=True
 )
 
@@ -1029,1610 +722,1305 @@ st.markdown(
 # SIDEBAR
 # ============================================================
 
-st.sidebar.markdown(
-    """
-    <div style="
-        font-size:20px;
-        font-weight:700;
-        color:#17324D;
-        margin-bottom:5px;
-    ">
-        Dashboard Filters
-    </div>
-    """,
-    unsafe_allow_html=True
+st.sidebar.title("📊 Dashboard")
+
+st.sidebar.markdown("---")
+
+page = st.sidebar.radio(
+    "Navigate",
+    [
+        "Executive Summary",
+        "Sales Trend",
+        "Sales by Channel",
+        "Sales by Category",
+        "Store-wise Sales",
+        "Demand Analysis",
+        "Actual vs Forecast",
+        "Year-wise Sales",
+        "Inventory Risk",
+        "Top Products"
+    ]
 )
 
 
 # ============================================================
-# YEAR FILTER
+# SIDEBAR DATA INFO
 # ============================================================
 
-years = sorted(
-    sales_df["year"]
-    .dropna()
-    .unique()
-    .tolist()
-)
+with st.sidebar.expander("Dataset Information"):
 
+    st.write(
+        "**Sales File:**"
+    )
 
-selected_years = st.sidebar.multiselect(
+    st.write(
+        os.path.basename(sales_file)
+    )
 
-    "Select Year",
+    st.write(
+        f"**Rows:** {len(sales_raw):,}"
+    )
 
-    years,
+    st.write(
+        f"**Columns:** {len(sales_raw.columns)}"
+    )
 
-    default=years
-)
+    if inventory_raw is not None:
 
+        st.write(
+            f"**Inventory Rows:** {len(inventory_raw):,}"
+        )
 
-# ============================================================
-# CHANNEL FILTER
-# ============================================================
+    if sku_raw is not None:
 
-channels = sorted(
-    sales_df["channel"]
-    .dropna()
-    .astype(str)
-    .unique()
-    .tolist()
-)
-
-
-selected_channels = st.sidebar.multiselect(
-
-    "Select Channel",
-
-    channels,
-
-    default=channels
-)
+        st.write(
+            f"**SKU Rows:** {len(sku_raw):,}"
+        )
 
 
 # ============================================================
-# CATEGORY FILTER
-# ============================================================
-
-categories = sorted(
-    sales_df["category"]
-    .dropna()
-    .astype(str)
-    .unique()
-    .tolist()
-)
-
-
-selected_categories = st.sidebar.multiselect(
-
-    "Select Category",
-
-    categories,
-
-    default=categories
-)
-
-
-# ============================================================
-# FILTER SUMMARY
+# FILTERS
 # ============================================================
 
 st.sidebar.markdown("---")
 
-st.sidebar.caption(
-    f"Years selected: {len(selected_years)}"
+st.sidebar.subheader("Filters")
+
+
+# ------------------------------------------------------------
+# DATE FILTER
+# ------------------------------------------------------------
+
+minimum_date = sales["Date"].min().date()
+
+maximum_date = sales["Date"].max().date()
+
+date_range = st.sidebar.date_input(
+    "Date Range",
+    value=(
+        minimum_date,
+        maximum_date
+    ),
+    min_value=minimum_date,
+    max_value=maximum_date
 )
 
-st.sidebar.caption(
-    f"Channels selected: {len(selected_channels)}"
-)
+if isinstance(date_range, tuple) and len(date_range) == 2:
 
-st.sidebar.caption(
-    f"Categories selected: {len(selected_categories)}"
-)
-
-
-# ============================================================
-# CATEGORY DATA WARNING
-# ============================================================
-
-if sku_master_df is None and sales_category_col is None:
-
-    st.sidebar.warning(
-        "sku_master.csv was not found and "
-        "sales data has no category column. "
-        "Category values will be Uncategorized."
+    start_date = pd.Timestamp(
+        date_range[0]
     )
 
-elif sku_master_df is not None:
-
-    st.sidebar.success(
-        "SKU master loaded successfully."
+    end_date = (
+        pd.Timestamp(date_range[1])
+        + pd.Timedelta(days=1)
+        - pd.Timedelta(seconds=1)
     )
 
+    filtered_sales = sales[
+        (sales["Date"] >= start_date)
+        &
+        (sales["Date"] <= end_date)
+    ].copy()
 
-# ============================================================
-# APPLY SALES FILTERS
-# ============================================================
+else:
 
-filtered_sales = sales_df.copy()
-
-
-if selected_years:
-
-    filtered_sales = filtered_sales[
-        filtered_sales["year"].isin(
-            selected_years
-        )
-    ]
+    filtered_sales = sales.copy()
 
 
-if selected_channels:
+# ------------------------------------------------------------
+# CATEGORY FILTER
+# ------------------------------------------------------------
 
-    filtered_sales = filtered_sales[
-        filtered_sales["channel"].isin(
-            selected_channels
-        )
-    ]
+category_values = sorted(
+    filtered_sales["Category"]
+    .dropna()
+    .unique()
+    .tolist()
+)
 
+selected_categories = st.sidebar.multiselect(
+    "Category",
+    category_values,
+    default=category_values
+)
 
 if selected_categories:
 
     filtered_sales = filtered_sales[
-        filtered_sales["category"].isin(
-            selected_categories
-        )
+        filtered_sales["Category"]
+        .isin(selected_categories)
     ]
 
 
 # ============================================================
-# APPLY DEMAND FILTER
+# COMMON FUNCTION
 # ============================================================
 
-if demand_df is not None:
+def show_no_data(message):
 
-    filtered_demand = demand_df.copy()
-
-    if (
-        selected_years
-        and "date" in filtered_demand.columns
-    ):
-
-        filtered_demand = filtered_demand[
-            filtered_demand["date"]
-            .dt.year
-            .isin(selected_years)
-        ]
-
-else:
-
-    filtered_demand = None
+    st.info(message)
 
 
 # ============================================================
-# APPLY FORECAST FILTER
+# 1. EXECUTIVE SUMMARY
 # ============================================================
 
-if forecast_df is not None:
-
-    filtered_forecast = forecast_df.copy()
-
-    if (
-        selected_years
-        and "date" in filtered_forecast.columns
-    ):
-
-        filtered_forecast = filtered_forecast[
-            filtered_forecast["date"]
-            .dt.year
-            .isin(selected_years)
-        ]
-
-else:
-
-    filtered_forecast = None
-
-
-# ============================================================
-# EMPTY DATA CHECK
-# ============================================================
-
-if filtered_sales.empty:
-
-    st.warning(
-        "No sales records match the selected filters."
-    )
-
-    st.info(
-        "Please select at least one year, "
-        "channel and category."
-    )
-
-    st.stop()
-
-
-# ============================================================
-# EXECUTIVE SUMMARY
-# ============================================================
-
-st.markdown(
-    """
-    <div class="section-header">
-        Executive Summary
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ============================================================
-# KPI CALCULATIONS
-# ============================================================
-
-total_sales = (
-    filtered_sales["total_value"]
-    .sum()
-)
-
-
-total_transactions = (
-    filtered_sales["receipt_id"]
-    .nunique()
-)
-
-
-total_quantity = (
-    filtered_sales["quantity"]
-    .sum()
-)
-
-
-total_stores = (
-    filtered_sales["store_id"]
-    .nunique()
-)
-
-
-total_products = (
-    filtered_sales["sku_id"]
-    .nunique()
-)
-
-
-average_order_value = (
-
-    total_sales /
-    total_transactions
-
-    if total_transactions > 0
-
-    else 0
-)
-
-
-# ============================================================
-# KPI CARDS
-# ============================================================
-
-kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = (
-    st.columns(6)
-)
-
-
-kpi1.metric(
-    "Total Sales",
-    f"₹{total_sales:,.0f}"
-)
-
-
-kpi2.metric(
-    "Transactions",
-    f"{total_transactions:,}"
-)
-
-
-kpi3.metric(
-    "Quantity Sold",
-    f"{total_quantity:,.0f}"
-)
-
-
-kpi4.metric(
-    "Stores",
-    f"{total_stores:,}"
-)
-
-
-kpi5.metric(
-    "Products",
-    f"{total_products:,}"
-)
-
-
-kpi6.metric(
-    "Avg Order Value",
-    f"₹{average_order_value:,.0f}"
-)
-
-
-# ============================================================
-# SALES TREND + CHANNEL
-# ============================================================
-
-st.divider()
-
-
-left, right = st.columns(
-    [2, 1]
-)
-
-
-# ============================================================
-# DAILY SALES TREND
-# ============================================================
-
-with left:
+if page == "Executive Summary":
 
     st.markdown(
-        """
-        <div class="section-header">
-            Sales Trend
-        </div>
-        """,
+        '<div class="section-title">'
+        'Executive Summary'
+        '</div>',
         unsafe_allow_html=True
     )
 
+    total_sales = filtered_sales["Sales"].sum()
 
-    if (
-        "date" in filtered_sales.columns
-        and "total_value" in filtered_sales.columns
-    ):
+    total_units = filtered_sales["Quantity"].sum()
 
-        daily_sales = (
+    products = filtered_sales["Product"].nunique()
 
-            filtered_sales
-            .groupby("date")["total_value"]
-            .sum()
-            .reset_index()
-            .sort_values("date")
-        )
+    stores = filtered_sales["Store"].nunique()
 
+    col1, col2, col3, col4 = st.columns(4)
 
-        fig_sales = px.line(
+    col1.metric(
+        "Total Sales",
+        f"₹{total_sales:,.0f}"
+    )
 
+    col2.metric(
+        "Units Sold",
+        f"{total_units:,.0f}"
+    )
+
+    col3.metric(
+        "Products",
+        f"{products:,}"
+    )
+
+    col4.metric(
+        "Stores",
+        f"{stores:,}"
+    )
+
+    st.markdown("---")
+
+    # Sales trend
+    daily_sales = (
+        filtered_sales
+        .groupby("Date", as_index=False)["Sales"]
+        .sum()
+    )
+
+    if not daily_sales.empty:
+
+        fig = px.line(
             daily_sales,
-
-            x="date",
-
-            y="total_value",
-
-            title="Daily Sales Trend"
+            x="Date",
+            y="Sales",
+            title="Sales Trend",
+            markers=True
         )
 
-
-        fig_sales.update_traces(
-
-            line=dict(
-                color="#0066CC",
-                width=2
-            ),
-
-            hovertemplate=
-            "<b>%{x|%d %b %Y}</b>"
-            "<br>Sales: ₹%{y:,.0f}"
-            "<extra></extra>"
+        fig.update_layout(
+            template="plotly_white"
         )
-
-
-        fig_sales.update_layout(
-
-            xaxis_title="Date",
-
-            yaxis_title="Sales (₹)",
-
-            hovermode="x unified",
-
-            dragmode="zoom"
-        )
-
-
-        style_chart(
-            fig_sales
-        )
-
 
         st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-            fig_sales,
+    col1, col2 = st.columns(2)
 
+    with col1:
+
+        category_sales = (
+            filtered_sales
+            .groupby("Category")["Sales"]
+            .sum()
+            .sort_values(
+                ascending=False
+            )
+            .reset_index()
+        )
+
+        if not category_sales.empty:
+
+            fig = px.bar(
+                category_sales.head(10),
+                x="Category",
+                y="Sales",
+                title="Sales by Category"
+            )
+
+            fig.update_layout(
+                template="plotly_white"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+    with col2:
+
+        top_products = (
+            filtered_sales
+            .groupby("Product")["Sales"]
+            .sum()
+            .sort_values(
+                ascending=False
+            )
+            .head(10)
+            .reset_index()
+        )
+
+        if not top_products.empty:
+
+            fig = px.bar(
+                top_products,
+                x="Sales",
+                y="Product",
+                orientation="h",
+                title="Top Products"
+            )
+
+            fig.update_layout(
+                template="plotly_white"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+
+# ============================================================
+# 2. SALES TREND
+# ============================================================
+
+elif page == "Sales Trend":
+
+    st.markdown(
+        '<div class="section-title">'
+        'Sales Trend'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    daily_sales = (
+        filtered_sales
+        .groupby("Date")
+        .agg(
+            Sales=("Sales", "sum"),
+            Quantity=("Quantity", "sum")
+        )
+        .reset_index()
+    )
+
+    if daily_sales.empty:
+
+        show_no_data(
+            "No sales trend data is available for the selected filters."
+        )
+
+    else:
+
+        fig = go.Figure()
+
+        fig.add_trace(
+            go.Scatter(
+                x=daily_sales["Date"],
+                y=daily_sales["Sales"],
+                mode="lines",
+                name="Sales"
+            )
+        )
+
+        fig.update_layout(
+            title="Daily Sales Trend",
+            xaxis_title="Date",
+            yaxis_title="Sales",
+            template="plotly_white",
+            hovermode="x unified"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        st.dataframe(
+            daily_sales,
             use_container_width=True,
-
-            key="daily_sales_chart"
+            hide_index=True
         )
 
 
 # ============================================================
-# SALES BY CHANNEL
+# 3. SALES BY CHANNEL
 # ============================================================
 
-with right:
+elif page == "Sales by Channel":
 
     st.markdown(
-        """
-        <div class="section-header">
-            Sales by Channel
-        </div>
-        """,
+        '<div class="section-title">'
+        'Sales by Channel'
+        '</div>',
         unsafe_allow_html=True
     )
 
-
     channel_sales = (
-
         filtered_sales
-        .groupby("channel")["total_value"]
+        .groupby("Channel")
+        .agg(
+            Sales=("Sales", "sum"),
+            Quantity=("Quantity", "sum")
+        )
+        .reset_index()
+        .sort_values(
+            "Sales",
+            ascending=False
+        )
+    )
+
+    # Even if channel does not exist, the standardized
+    # column contains "Unknown", so the section never crashes.
+
+    if channel_sales.empty:
+
+        show_no_data(
+            "Channel sales data is not available."
+        )
+
+    else:
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            fig = px.bar(
+                channel_sales,
+                x="Channel",
+                y="Sales",
+                title="Sales by Channel"
+            )
+
+            fig.update_layout(
+                template="plotly_white"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+        with col2:
+
+            fig = px.pie(
+                channel_sales,
+                names="Channel",
+                values="Sales",
+                title="Channel Contribution"
+            )
+
+            fig.update_layout(
+                template="plotly_white"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+        st.dataframe(
+            channel_sales,
+            use_container_width=True,
+            hide_index=True
+        )
+
+
+# ============================================================
+# 4. SALES BY CATEGORY
+# ============================================================
+
+elif page == "Sales by Category":
+
+    st.markdown(
+        '<div class="section-title">'
+        'Sales by Category'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    category_sales = (
+        filtered_sales
+        .groupby("Category")
+        .agg(
+            Sales=("Sales", "sum"),
+            Quantity=("Quantity", "sum"),
+            Products=("Product", "nunique")
+        )
+        .reset_index()
+        .sort_values(
+            "Sales",
+            ascending=False
+        )
+    )
+
+    if category_sales.empty:
+
+        show_no_data(
+            "Category sales data is not available."
+        )
+
+    else:
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            fig = px.bar(
+                category_sales,
+                x="Category",
+                y="Sales",
+                title="Sales by Category"
+            )
+
+            fig.update_layout(
+                template="plotly_white",
+                xaxis_tickangle=-45
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+        with col2:
+
+            fig = px.pie(
+                category_sales,
+                names="Category",
+                values="Sales",
+                title="Category Contribution"
+            )
+
+            fig.update_layout(
+                template="plotly_white"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+        st.dataframe(
+            category_sales,
+            use_container_width=True,
+            hide_index=True
+        )
+
+
+# ============================================================
+# 5. STORE-WISE SALES
+# ============================================================
+
+elif page == "Store-wise Sales":
+
+    st.markdown(
+        '<div class="section-title">'
+        'Store-wise Sales'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    store_sales = (
+        filtered_sales
+        .groupby("Store")
+        .agg(
+            Sales=("Sales", "sum"),
+            Quantity=("Quantity", "sum"),
+            Products=("Product", "nunique")
+        )
+        .reset_index()
+        .sort_values(
+            "Sales",
+            ascending=False
+        )
+    )
+
+    if store_sales.empty:
+
+        show_no_data(
+            "Store-wise sales data is not available."
+        )
+
+    else:
+
+        # Remove Unknown if real stores exist
+        chart_data = store_sales.copy()
+
+        if (
+            len(chart_data) > 1
+            and "Unknown" in chart_data["Store"].values
+        ):
+
+            chart_data = chart_data[
+                chart_data["Store"] != "Unknown"
+            ]
+
+        if chart_data.empty:
+
+            chart_data = store_sales
+
+        fig = px.bar(
+            chart_data.head(20),
+            x="Sales",
+            y="Store",
+            orientation="h",
+            title="Top Stores by Sales"
+        )
+
+        fig.update_layout(
+            template="plotly_white"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        st.dataframe(
+            store_sales,
+            use_container_width=True,
+            hide_index=True
+        )
+
+
+# ============================================================
+# 6. DEMAND ANALYSIS
+# ============================================================
+
+elif page == "Demand Analysis":
+
+    st.markdown(
+        '<div class="section-title">'
+        'Demand Analysis'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    demand = (
+        filtered_sales
+        .groupby("Date")
+        .agg(
+            Demand=("Quantity", "sum"),
+            Sales=("Sales", "sum")
+        )
+        .reset_index()
+    )
+
+    if demand.empty:
+
+        show_no_data(
+            "Demand data is not available."
+        )
+
+    else:
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(
+            "Total Demand",
+            f"{demand['Demand'].sum():,.0f}"
+        )
+
+        col2.metric(
+            "Average Daily Demand",
+            f"{demand['Demand'].mean():,.0f}"
+        )
+
+        col3.metric(
+            "Peak Daily Demand",
+            f"{demand['Demand'].max():,.0f}"
+        )
+
+        fig = px.line(
+            demand,
+            x="Date",
+            y="Demand",
+            title="Daily Demand"
+        )
+
+        fig.update_layout(
+            template="plotly_white"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        # Demand by weekday
+        weekday_order = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+        ]
+
+        weekday_demand = (
+            filtered_sales
+            .groupby("Weekday")["Quantity"]
+            .sum()
+            .reindex(weekday_order)
+            .reset_index()
+        )
+
+        fig = px.bar(
+            weekday_demand,
+            x="Weekday",
+            y="Quantity",
+            title="Demand by Day of Week"
+        )
+
+        fig.update_layout(
+            template="plotly_white"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+
+# ============================================================
+# 7. ACTUAL VS FORECAST
+# ============================================================
+
+elif page == "Actual vs Forecast":
+
+    st.markdown(
+        '<div class="section-title">'
+        'Actual vs Forecast'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    actual = (
+        filtered_sales
+        .groupby("Date")["Quantity"]
         .sum()
         .reset_index()
     )
 
+    actual = actual.sort_values("Date")
 
-    fig_channel = px.pie(
+    if len(actual) < 7:
 
-        channel_sales,
-
-        names="channel",
-
-        values="total_value",
-
-        hole=0.45,
-
-        title="Sales Distribution by Channel",
-
-        color_discrete_sequence=[
-            "#6366F1",
-            "#EF553B",
-            "#00CC96",
-            "#FFA15A"
-        ]
-    )
-
-
-    fig_channel.update_traces(
-
-        textposition="inside",
-
-        textinfo="percent",
-
-        hovertemplate=
-        "<b>%{label}</b>"
-        "<br>Sales: ₹%{value:,.0f}"
-        "<br>Share: %{percent}"
-        "<extra></extra>"
-    )
-
-
-    style_chart(
-        fig_channel
-    )
-
-
-    st.plotly_chart(
-
-        fig_channel,
-
-        use_container_width=True,
-
-        key="channel_chart"
-    )
-
-
-# ============================================================
-# STORE-WISE SALES
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Store-wise Sales
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-store_sales = (
-
-    filtered_sales
-    .groupby("store_id")["total_value"]
-    .sum()
-    .sort_values(
-        ascending=False
-    )
-    .head(15)
-    .reset_index()
-)
-
-
-fig_store = px.bar(
-
-    store_sales,
-
-    x="store_id",
-
-    y="total_value",
-
-    title="Top 15 Stores by Sales",
-
-    text="total_value",
-
-    color_discrete_sequence=[
-        "#0875CE"
-    ]
-)
-
-
-fig_store.update_traces(
-
-    texttemplate="₹%{y:,.0f}",
-
-    textposition="outside",
-
-    hovertemplate=
-    "<b>Store %{x}</b>"
-    "<br>Sales: ₹%{y:,.0f}"
-    "<extra></extra>"
-)
-
-
-fig_store.update_layout(
-
-    xaxis_title="Store",
-
-    yaxis_title="Sales (₹)",
-
-    dragmode="zoom"
-)
-
-
-style_chart(
-    fig_store
-)
-
-
-st.plotly_chart(
-
-    fig_store,
-
-    use_container_width=True,
-
-    key="store_chart"
-)
-
-
-# ============================================================
-# CATEGORY PERFORMANCE
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Category Performance
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ============================================================
-# CATEGORY SUMMARY
-# ============================================================
-
-category_summary = (
-
-    filtered_sales
-    .groupby("category")
-    .agg(
-
-        Sales=(
-            "total_value",
-            "sum"
-        ),
-
-        Transactions=(
-            "receipt_id",
-            "nunique"
-        ),
-
-        Quantity=(
-            "quantity",
-            "sum"
-        ),
-
-        Products=(
-            "sku_id",
-            "nunique"
+        show_no_data(
+            "At least 7 days of data are required for the forecast."
         )
 
-    )
-    .reset_index()
-    .sort_values(
-        "Sales",
-        ascending=False
-    )
-)
+    else:
 
+        forecast_days = st.slider(
+            "Forecast Horizon",
+            min_value=7,
+            max_value=60,
+            value=30
+        )
 
-# ============================================================
-# CATEGORY CHART + TABLE
-# ============================================================
+        window = min(
+            14,
+            len(actual)
+        )
 
-category_left, category_right = st.columns(
-    [1.6, 1]
-)
+        moving_average = (
+            actual["Quantity"]
+            .tail(window)
+            .mean()
+        )
 
+        future_dates = pd.date_range(
+            start=actual["Date"].max()
+            + pd.Timedelta(days=1),
+            periods=forecast_days,
+            freq="D"
+        )
 
-# ============================================================
-# CATEGORY SALES CHART
-# ============================================================
+        forecast = pd.DataFrame(
+            {
+                "Date": future_dates,
+                "Forecast": moving_average
+            }
+        )
 
-with category_left:
+        fig = go.Figure()
 
-    fig_category = px.bar(
+        fig.add_trace(
+            go.Scatter(
+                x=actual["Date"],
+                y=actual["Quantity"],
+                mode="lines",
+                name="Actual Demand"
+            )
+        )
 
-        category_summary,
-
-        x="category",
-
-        y="Sales",
-
-        title="Sales by Category",
-
-        text="Sales",
-
-        color="Sales",
-
-        color_continuous_scale=[
-            "#DCEBFA",
-            "#0875CE",
-            "#0F2747"
-        ]
-    )
-
-
-    fig_category.update_traces(
-
-        texttemplate="₹%{y:,.0f}",
-
-        textposition="outside",
-
-        hovertemplate=
-        "<b>%{x}</b>"
-        "<br>Sales: ₹%{y:,.0f}"
-        "<extra></extra>"
-    )
-
-
-    fig_category.update_layout(
-
-        xaxis_title="Category",
-
-        yaxis_title="Sales (₹)",
-
-        coloraxis_showscale=False,
-
-        xaxis_tickangle=-35
-    )
-
-
-    style_chart(
-        fig_category,
-        height=450
-    )
-
-
-    st.plotly_chart(
-
-        fig_category,
-
-        use_container_width=True,
-
-        key="category_sales_chart"
-    )
-
-
-# ============================================================
-# CATEGORY TABLE
-# ============================================================
-
-with category_right:
-
-    display_category = category_summary.copy()
-
-    display_category["Sales"] = (
-        display_category["Sales"]
-        .round(0)
-    )
-
-
-    st.dataframe(
-
-        display_category,
-
-        use_container_width=True,
-
-        hide_index=True,
-
-        height=450,
-
-        column_config={
-
-            "category":
-                st.column_config.TextColumn(
-                    "Category"
-                ),
-
-            "Sales":
-                st.column_config.NumberColumn(
-                    "Sales",
-                    format="₹%d"
-                ),
-
-            "Transactions":
-                st.column_config.NumberColumn(
-                    "Transactions",
-                    format="%d"
-                ),
-
-            "Quantity":
-                st.column_config.NumberColumn(
-                    "Quantity",
-                    format="%d"
-                ),
-
-            "Products":
-                st.column_config.NumberColumn(
-                    "Products",
-                    format="%d"
+        fig.add_trace(
+            go.Scatter(
+                x=forecast["Date"],
+                y=forecast["Forecast"],
+                mode="lines",
+                name="Forecast",
+                line=dict(
+                    dash="dash"
                 )
-        }
-    )
-
-
-# ============================================================
-# DEMAND ANALYSIS
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Demand Analysis
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-demand_left, demand_right = st.columns(2)
-
-
-# ============================================================
-# DEMAND TREND
-# ============================================================
-
-with demand_left:
-
-    st.markdown(
-        "**Demand Trend**"
-    )
-
-
-    if (
-        filtered_demand is not None
-        and "date" in filtered_demand.columns
-        and "demand" in filtered_demand.columns
-    ):
-
-        filtered_demand["demand"] = pd.to_numeric(
-            filtered_demand["demand"],
-            errors="coerce"
-        ).fillna(0)
-
-
-        daily_demand = (
-
-            filtered_demand
-            .groupby("date")["demand"]
-            .sum()
-            .reset_index()
-            .sort_values("date")
+            )
         )
 
-
-        fig_demand = px.line(
-
-            daily_demand,
-
-            x="date",
-
-            y="demand",
-
-            title="Daily Demand"
+        fig.add_vline(
+            x=actual["Date"].max(),
+            line_dash="dot"
         )
 
-
-        fig_demand.update_traces(
-
-            line=dict(
-                color="#0875CE",
-                width=2
-            ),
-
-            hovertemplate=
-            "<b>%{x|%d %b %Y}</b>"
-            "<br>Demand: %{y:,.0f}"
-            "<extra></extra>"
-        )
-
-
-        fig_demand.update_layout(
-
+        fig.update_layout(
+            title="Actual Demand vs Forecast",
             xaxis_title="Date",
-
             yaxis_title="Demand",
-
+            template="plotly_white",
             hovermode="x unified"
         )
 
-
-        style_chart(
-            fig_demand
-        )
-
-
         st.plotly_chart(
-
-            fig_demand,
-
-            use_container_width=True,
-
-            key="demand_chart"
+            fig,
+            use_container_width=True
         )
 
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(
+            "Forecast Horizon",
+            f"{forecast_days} Days"
+        )
+
+        col2.metric(
+            "Average Forecast",
+            f"{moving_average:,.0f}"
+        )
+
+        col3.metric(
+            "Expected Demand",
+            f"{forecast['Forecast'].sum():,.0f}"
+        )
+
+        st.info(
+            "The current forecast uses a moving-average baseline "
+            "so the dashboard remains functional without requiring "
+            "an external forecasting model."
+        )
+
+
+# ============================================================
+# 8. YEAR-WISE SALES
+# ============================================================
+
+elif page == "Year-wise Sales":
+
+    st.markdown(
+        '<div class="section-title">'
+        'Year-wise Sales'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    yearly_sales = (
+        filtered_sales
+        .groupby("Year")["Sales"]
+        .sum()
+        .reset_index()
+        .sort_values("Year")
+    )
+
+    if yearly_sales.empty:
+
+        show_no_data(
+            "Year-wise sales data is not available."
+        )
 
     else:
 
-        st.info(
-            "Daily demand dataset is not available."
+        fig = px.bar(
+            yearly_sales,
+            x="Year",
+            y="Sales",
+            text_auto=".2s",
+            title="Sales by Year"
+        )
+
+        fig.update_layout(
+            template="plotly_white"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        # Growth calculation
+        yearly_sales["Growth %"] = (
+            yearly_sales["Sales"]
+            .pct_change()
+            .mul(100)
+            .round(2)
+        )
+
+        st.dataframe(
+            yearly_sales,
+            use_container_width=True,
+            hide_index=True
         )
 
 
 # ============================================================
-# ACTUAL VS FORECAST
+# 9. INVENTORY RISK
 # ============================================================
 
-with demand_right:
+elif page == "Inventory Risk":
 
     st.markdown(
-        "**Actual vs Forecast**"
+        '<div class="section-title">'
+        'Inventory Risk'
+        '</div>',
+        unsafe_allow_html=True
     )
 
+    if inventory_raw is None:
 
-    if (
-        filtered_forecast is not None
-        and "date" in filtered_forecast.columns
-        and "actual_demand" in filtered_forecast.columns
-        and "predicted_demand" in filtered_forecast.columns
-    ):
+        # Fallback risk calculation using sales demand
+        st.info(
+            "Inventory snapshot data was not found. "
+            "Showing demand-based inventory risk instead."
+        )
 
-        forecast_chart = (
+        product_risk = (
+            filtered_sales
+            .groupby(["Product", "Category"])
+            .agg(
+                Demand=("Quantity", "sum"),
+                Sales=("Sales", "sum"),
+                Active_Days=("Date", "nunique")
+            )
+            .reset_index()
+        )
 
-            filtered_forecast[
-                [
-                    "date",
-                    "actual_demand",
-                    "predicted_demand"
+        if product_risk.empty:
+
+            show_no_data(
+                "Inventory risk cannot be calculated."
+            )
+
+        else:
+
+            product_risk["Avg_Daily_Demand"] = (
+                product_risk["Demand"]
+                /
+                product_risk["Active_Days"]
+                .replace(0, 1)
+            )
+
+            # Demand percentile risk
+            product_risk["Risk_Score"] = (
+                product_risk[
+                    "Avg_Daily_Demand"
                 ]
+                .rank(pct=True)
+                * 100
+            )
+
+            def assign_risk(score):
+
+                if score >= 75:
+                    return "High"
+
+                if score >= 40:
+                    return "Medium"
+
+                return "Low"
+
+            product_risk["Risk_Level"] = (
+                product_risk["Risk_Score"]
+                .apply(assign_risk)
+            )
+
+            high_risk = product_risk[
+                product_risk["Risk_Level"]
+                == "High"
             ]
-            .copy()
-            .sort_values("date")
-        )
 
+            medium_risk = product_risk[
+                product_risk["Risk_Level"]
+                == "Medium"
+            ]
 
-        forecast_chart[
-            "actual_demand"
-        ] = pd.to_numeric(
-            forecast_chart[
-                "actual_demand"
-            ],
-            errors="coerce"
-        )
+            low_risk = product_risk[
+                product_risk["Risk_Level"]
+                == "Low"
+            ]
 
+            col1, col2, col3 = st.columns(3)
 
-        forecast_chart[
-            "predicted_demand"
-        ] = pd.to_numeric(
-            forecast_chart[
-                "predicted_demand"
-            ],
-            errors="coerce"
-        )
-
-
-        fig_forecast = go.Figure()
-
-
-        fig_forecast.add_trace(
-
-            go.Scatter(
-
-                x=forecast_chart["date"],
-
-                y=forecast_chart[
-                    "actual_demand"
-                ],
-
-                mode="lines",
-
-                name="Actual Demand",
-
-                line=dict(
-                    color="#0875CE",
-                    width=2
-                ),
-
-                hovertemplate=
-                "<b>%{x|%d %b %Y}</b>"
-                "<br>Actual: %{y:,.0f}"
-                "<extra></extra>"
+            col1.metric(
+                "High Risk",
+                len(high_risk)
             )
-        )
 
-
-        fig_forecast.add_trace(
-
-            go.Scatter(
-
-                x=forecast_chart["date"],
-
-                y=forecast_chart[
-                    "predicted_demand"
-                ],
-
-                mode="lines",
-
-                name="Predicted Demand",
-
-                line=dict(
-                    color="#EF553B",
-                    width=2
-                ),
-
-                hovertemplate=
-                "<b>%{x|%d %b %Y}</b>"
-                "<br>Predicted: %{y:,.0f}"
-                "<extra></extra>"
+            col2.metric(
+                "Medium Risk",
+                len(medium_risk)
             )
+
+            col3.metric(
+                "Low Risk",
+                len(low_risk)
+            )
+
+            risk_distribution = (
+                product_risk
+                .groupby("Risk_Level")
+                .size()
+                .reset_index(
+                    name="Products"
+                )
+            )
+
+            fig = px.bar(
+                risk_distribution,
+                x="Risk_Level",
+                y="Products",
+                title="Inventory Risk Distribution"
+            )
+
+            fig.update_layout(
+                template="plotly_white"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+            st.markdown(
+                "### High-Risk Products"
+            )
+
+            st.dataframe(
+                high_risk.sort_values(
+                    "Risk_Score",
+                    ascending=False
+                ),
+                use_container_width=True,
+                hide_index=True
+            )
+
+    else:
+
+        inventory = inventory_raw.copy()
+
+        inventory_product = find_column(
+            inventory,
+            [
+                "product_id",
+                "product",
+                "sku",
+                "sku_id",
+                "item_id"
+            ]
         )
 
-
-        fig_forecast.update_layout(
-
-            title="Actual vs Predicted Demand",
-
-            xaxis_title="Date",
-
-            yaxis_title="Demand",
-
-            hovermode="x unified"
+        inventory_quantity = find_column(
+            inventory,
+            [
+                "inventory",
+                "stock",
+                "stock_quantity",
+                "quantity",
+                "on_hand",
+                "units"
+            ]
         )
 
+        if inventory_quantity is None:
 
-        style_chart(
-            fig_forecast
+            st.warning(
+                "Inventory file exists, but a stock quantity column "
+                "could not be identified."
+            )
+
+            st.dataframe(
+                inventory.head(100),
+                use_container_width=True,
+                hide_index=True
+            )
+
+        else:
+
+            inventory["Stock"] = pd.to_numeric(
+                inventory[inventory_quantity],
+                errors="coerce"
+            ).fillna(0)
+
+            if inventory_product is not None:
+
+                inventory_summary = (
+                    inventory
+                    .groupby(inventory_product)["Stock"]
+                    .sum()
+                    .reset_index()
+                )
+
+                # Calculate demand
+                product_demand = (
+                    filtered_sales
+                    .groupby("Product")["Quantity"]
+                    .mean()
+                    .reset_index()
+                )
+
+                product_demand.columns = [
+                    "Product",
+                    "Avg_Daily_Demand"
+                ]
+
+                inventory_summary = (
+                    inventory_summary
+                    .rename(
+                        columns={
+                            inventory_product:
+                            "Product"
+                        }
+                    )
+                    .merge(
+                        product_demand,
+                        on="Product",
+                        how="left"
+                    )
+                )
+
+                inventory_summary[
+                    "Avg_Daily_Demand"
+                ] = inventory_summary[
+                    "Avg_Daily_Demand"
+                ].fillna(0)
+
+                inventory_summary[
+                    "Days_of_Cover"
+                ] = np.where(
+                    inventory_summary[
+                        "Avg_Daily_Demand"
+                    ] > 0,
+                    inventory_summary["Stock"]
+                    /
+                    inventory_summary[
+                        "Avg_Daily_Demand"
+                    ],
+                    np.inf
+                )
+
+                def inventory_risk(days):
+
+                    if days < 7:
+                        return "High"
+
+                    elif days < 21:
+                        return "Medium"
+
+                    return "Low"
+
+                inventory_summary[
+                    "Risk_Level"
+                ] = (
+                    inventory_summary[
+                        "Days_of_Cover"
+                    ]
+                    .apply(inventory_risk)
+                )
+
+                high = (
+                    inventory_summary[
+                        "Risk_Level"
+                    ] == "High"
+                ).sum()
+
+                medium = (
+                    inventory_summary[
+                        "Risk_Level"
+                    ] == "Medium"
+                ).sum()
+
+                low = (
+                    inventory_summary[
+                        "Risk_Level"
+                    ] == "Low"
+                ).sum()
+
+                col1, col2, col3 = st.columns(3)
+
+                col1.metric(
+                    "High Risk",
+                    int(high)
+                )
+
+                col2.metric(
+                    "Medium Risk",
+                    int(medium)
+                )
+
+                col3.metric(
+                    "Low Risk",
+                    int(low)
+                )
+
+                risk_distribution = pd.DataFrame(
+                    {
+                        "Risk Level": [
+                            "High",
+                            "Medium",
+                            "Low"
+                        ],
+                        "Products": [
+                            high,
+                            medium,
+                            low
+                        ]
+                    }
+                )
+
+                fig = px.bar(
+                    risk_distribution,
+                    x="Risk Level",
+                    y="Products",
+                    title="Inventory Risk Distribution"
+                )
+
+                fig.update_layout(
+                    template="plotly_white"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+                st.markdown(
+                    "### Inventory Risk Details"
+                )
+
+                st.dataframe(
+                    inventory_summary.sort_values(
+                        "Days_of_Cover"
+                    ),
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+
+# ============================================================
+# 10. TOP PRODUCTS
+# ============================================================
+
+elif page == "Top Products":
+
+    st.markdown(
+        '<div class="section-title">'
+        'Top Products'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    number_of_products = st.slider(
+        "Number of Products",
+        min_value=5,
+        max_value=30,
+        value=10
+    )
+
+    top_products = (
+        filtered_sales
+        .groupby(
+            ["Product", "Category"]
+        )
+        .agg(
+            Sales=("Sales", "sum"),
+            Quantity=("Quantity", "sum")
+        )
+        .reset_index()
+        .sort_values(
+            "Sales",
+            ascending=False
+        )
+        .head(number_of_products)
+    )
+
+    if top_products.empty:
+
+        show_no_data(
+            "Top product data is not available."
         )
 
+    else:
+
+        fig = px.bar(
+            top_products.sort_values(
+                "Sales"
+            ),
+            x="Sales",
+            y="Product",
+            color="Category",
+            orientation="h",
+            title=f"Top {number_of_products} Products by Sales"
+        )
+
+        fig.update_layout(
+            template="plotly_white"
+        )
 
         st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-            fig_forecast,
-
+        st.dataframe(
+            top_products,
             use_container_width=True,
-
-            key="forecast_chart"
+            hide_index=True
         )
-
-
-    else:
-
-        st.info(
-            "Forecast columns are not available."
-        )
-
-
-# ============================================================
-# YEAR-WISE SALES
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Year-wise Sales
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-yearly_sales = (
-
-    filtered_sales
-    .groupby("year")["total_value"]
-    .sum()
-    .reset_index()
-    .sort_values("year")
-)
-
-
-fig_year = px.bar(
-
-    yearly_sales,
-
-    x="year",
-
-    y="total_value",
-
-    title="Sales by Year",
-
-    text="total_value",
-
-    color_discrete_sequence=[
-        "#0875CE"
-    ]
-)
-
-
-fig_year.update_traces(
-
-    texttemplate="₹%{y:,.0f}",
-
-    textposition="outside",
-
-    hovertemplate=
-    "<b>%{x}</b>"
-    "<br>Sales: ₹%{y:,.0f}"
-    "<extra></extra>"
-)
-
-
-fig_year.update_layout(
-
-    xaxis_title="Year",
-
-    yaxis_title="Sales (₹)"
-)
-
-
-style_chart(
-    fig_year
-)
-
-
-st.plotly_chart(
-
-    fig_year,
-
-    use_container_width=True,
-
-    key="year_chart"
-)
-
-
-# ============================================================
-# INVENTORY RISK
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Inventory Risk
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-if inventory_df is not None:
-
-    risk_col = find_column(
-        inventory_df,
-        [
-            "final_risk_level",
-            "risk_level",
-            "inventory_risk"
-        ]
-    )
-
-
-    if risk_col is not None:
-
-        inventory_df["_risk_clean"] = (
-            inventory_df[risk_col]
-            .astype(str)
-            .str.strip()
-        )
-
-
-        critical_inventory = (
-            inventory_df["_risk_clean"]
-            .eq("Critical")
-            .sum()
-        )
-
-
-        high_risk_inventory = (
-            inventory_df["_risk_clean"]
-            .eq("High Risk")
-            .sum()
-        )
-
-
-        medium_risk_inventory = (
-            inventory_df["_risk_clean"]
-            .eq("Medium Risk")
-            .sum()
-        )
-
-
-        low_risk_inventory = (
-            inventory_df["_risk_clean"]
-            .eq("Low Risk")
-            .sum()
-        )
-
-
-        risk1, risk2, risk3, risk4 = (
-            st.columns(4)
-        )
-
-
-        risk1.metric(
-            "Critical",
-            f"{critical_inventory:,}"
-        )
-
-
-        risk2.metric(
-            "High Risk",
-            f"{high_risk_inventory:,}"
-        )
-
-
-        risk3.metric(
-            "Medium Risk",
-            f"{medium_risk_inventory:,}"
-        )
-
-
-        risk4.metric(
-            "Low Risk",
-            f"{low_risk_inventory:,}"
-        )
-
-
-        risk_counts = (
-
-            inventory_df[
-                "_risk_clean"
-            ]
-            .value_counts()
-            .reset_index()
-        )
-
-
-        risk_counts.columns = [
-            "risk_level",
-            "product_count"
-        ]
-
-
-        fig_risk = px.bar(
-
-            risk_counts,
-
-            x="risk_level",
-
-            y="product_count",
-
-            title="Inventory Risk Distribution",
-
-            text="product_count",
-
-            color="risk_level",
-
-            color_discrete_map={
-                "Critical": "#D62728",
-                "High Risk": "#FF7F0E",
-                "Medium Risk": "#F2C744",
-                "Low Risk": "#2CA02C"
-            }
-        )
-
-
-        fig_risk.update_traces(
-
-            textposition="outside",
-
-            hovertemplate=
-            "<b>%{x}</b>"
-            "<br>Products: %{y:,}"
-            "<extra></extra>"
-        )
-
-
-        fig_risk.update_layout(
-
-            xaxis_title="Risk Level",
-
-            yaxis_title="Number of Products",
-
-            showlegend=False
-        )
-
-
-        style_chart(
-            fig_risk
-        )
-
-
-        st.plotly_chart(
-
-            fig_risk,
-
-            use_container_width=True,
-
-            key="risk_chart"
-        )
-
-
-    else:
-
-        st.info(
-            "Risk level column is not available."
-        )
-
-
-else:
-
-    st.info(
-        "Inventory risk dataset is not available yet."
-    )
-
-
-# ============================================================
-# TOP PRODUCTS
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Top Products
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-top_products = (
-
-    filtered_sales
-    .groupby("sku_id")["total_value"]
-    .sum()
-    .sort_values(
-        ascending=False
-    )
-    .head(10)
-    .reset_index()
-)
-
-
-fig_products = px.bar(
-
-    top_products,
-
-    x="total_value",
-
-    y="sku_id",
-
-    orientation="h",
-
-    title="Top 10 Products by Sales",
-
-    text="total_value",
-
-    color_discrete_sequence=[
-        "#0875CE"
-    ]
-)
-
-
-fig_products.update_traces(
-
-    texttemplate="₹%{x:,.0f}",
-
-    textposition="outside",
-
-    hovertemplate=
-    "<b>Product %{y}</b>"
-    "<br>Sales: ₹%{x:,.0f}"
-    "<extra></extra>"
-)
-
-
-fig_products.update_layout(
-
-    xaxis_title="Sales (₹)",
-
-    yaxis_title="Product",
-
-    yaxis={
-        "categoryorder": "total ascending"
-    }
-)
-
-
-style_chart(
-    fig_products
-)
-
-
-st.plotly_chart(
-
-    fig_products,
-
-    use_container_width=True,
-
-    key="products_chart"
-)
-
-
-# ============================================================
-# CATEGORY DATA QUALITY
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Category Data Quality
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-category_count = (
-    sales_df["category"]
-    .nunique()
-)
-
-
-uncategorized_count = (
-    sales_df["category"]
-    .eq("Uncategorized")
-    .sum()
-)
-
-
-categorized_count = (
-    len(sales_df)
-    -
-    uncategorized_count
-)
-
-
-quality1, quality2, quality3 = st.columns(3)
-
-
-quality1.metric(
-    "Unique Categories",
-    f"{category_count:,}"
-)
-
-
-quality2.metric(
-    "Categorized Records",
-    f"{categorized_count:,}"
-)
-
-
-quality3.metric(
-    "Uncategorized Records",
-    f"{uncategorized_count:,}"
-)
-
-
-# ============================================================
-# PROJECT OVERVIEW
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Project Overview
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-st.write(
-    """
-    This Retail Executive Dashboard provides a professional
-    overview of retail sales performance, customer transactions,
-    demand trends, demand forecasting and inventory risk.
-
-    The dashboard helps management understand sales patterns,
-    channel performance, store performance, product performance,
-    category performance and inventory risk so that better
-    business decisions can be made.
-    """
-)
-
-
-# ============================================================
-# DATA SOURCE STATUS
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Data Sources
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-dataset_status = []
-
-
-datasets = {
-
-    "Sales Transactions":
-        (
-            sales_df,
-            sales_path
-        ),
-
-    "SKU Master":
-        (
-            sku_master_df,
-            sku_master_path
-        ),
-
-    "Daily Demand Features":
-        (
-            demand_df,
-            demand_path
-        ),
-
-    "Demand Forecast Results":
-        (
-            forecast_df,
-            forecast_path
-        ),
-
-    "Inventory Risk Scoring":
-        (
-            inventory_df,
-            inventory_path
-        )
-}
-
-
-for dataset_name, (
-    dataframe,
-    filepath
-) in datasets.items():
-
-    if dataframe is not None:
-
-        dataset_status.append(
-            {
-                "Dataset":
-                    dataset_name,
-
-                "Status":
-                    "Available",
-
-                "Records":
-                    len(dataframe),
-
-                "Columns":
-                    len(dataframe.columns),
-
-                "File":
-                    filepath
-            }
-        )
-
-    else:
-
-        dataset_status.append(
-            {
-                "Dataset":
-                    dataset_name,
-
-                "Status":
-                    "Not Available",
-
-                "Records":
-                    0,
-
-                "Columns":
-                    0,
-
-                "File":
-                    "Not found"
-            }
-        )
-
-
-status_df = pd.DataFrame(
-    dataset_status
-)
-
-
-st.dataframe(
-
-    status_df,
-
-    use_container_width=True,
-
-    hide_index=True
-)
 
 
 # ============================================================
 # FOOTER
 # ============================================================
 
-st.divider()
-
+st.markdown("---")
 
 st.markdown(
     """
-    <div class="dashboard-footer">
-
+    <div style="
+        text-align:center;
+        color:#6b7280;
+        font-size:13px;
+        padding:10px;
+    ">
         Retail Executive Dashboard
-        &nbsp;|&nbsp;
-        Online Retail Demand Forecasting Project
-
+        <br>
+        Sales Performance • Demand Forecasting • Inventory Intelligence
     </div>
     """,
     unsafe_allow_html=True
