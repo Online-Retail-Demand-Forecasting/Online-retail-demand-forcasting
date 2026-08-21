@@ -1,14 +1,16 @@
 import streamlit as st
 import pandas as pd
 import os
+import plotly.express as px
+
 
 # =========================================================
 # PAGE CONFIGURATION
 # =========================================================
 
 st.set_page_config(
-    page_title="Retail Demand Forecasting",
-    page_icon="📊",
+    page_title="Retail Executive Dashboard",
+    page_icon="🛍️",
     layout="wide"
 )
 
@@ -107,65 +109,67 @@ forecast_df["date"] = pd.to_datetime(
 
 
 # =========================================================
+# CREATE YEAR COLUMN IF NEEDED
+# =========================================================
+
+if "year" not in sales_df.columns:
+
+    sales_df["year"] = sales_df["date"].dt.year
+
+
+# =========================================================
 # HEADER
 # =========================================================
 
-st.title("🛍️ Online Retail Demand Forecasting")
-
-st.subheader(
-    "Inventory & Demand Intelligence Dashboard"
-)
+st.title("🛍️ Retail Executive Dashboard")
 
 st.markdown(
-    "Monitor sales demand, forecasting performance, "
-    "and retail business insights for better "
-    "decision-making."
+    "### Sales, Demand Forecasting & Inventory Intelligence"
+)
+
+st.caption(
+    "Executive overview of retail sales performance, "
+    "customer transactions, demand and inventory risk."
 )
 
 
 # =========================================================
-# FILTERS
+# SIDEBAR FILTERS
 # =========================================================
 
-st.divider()
-
-st.header("🎛️ Dashboard Filters")
-
-filter_col1, filter_col2 = st.columns(2)
+st.sidebar.header("🎛️ Filters")
 
 
-# Year Filter
+# Year filter
 
-with filter_col1:
+years = sorted(
+    sales_df["year"]
+    .dropna()
+    .unique()
+    .tolist()
+)
 
-    years = sorted(
-        sales_df["year"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
-    selected_year = st.selectbox(
-        "Select Year",
-        ["All"] + years
-    )
+selected_years = st.sidebar.multiselect(
+    "Select Year",
+    years,
+    default=years
+)
 
 
-# Channel Filter
+# Channel filter
 
-with filter_col2:
+channels = sorted(
+    sales_df["channel"]
+    .dropna()
+    .unique()
+    .tolist()
+)
 
-    channels = sorted(
-        sales_df["channel"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
-    selected_channel = st.selectbox(
-        "Select Channel",
-        ["All"] + channels
-    )
+selected_channels = st.sidebar.multiselect(
+    "Select Channel",
+    channels,
+    default=channels
+)
 
 
 # =========================================================
@@ -181,184 +185,350 @@ filtered_forecast = forecast_df.copy()
 
 # Year filter
 
-if selected_year != "All":
+if selected_years:
 
     filtered_sales = filtered_sales[
-        filtered_sales["year"] == selected_year
+        filtered_sales["year"].isin(selected_years)
     ]
 
     filtered_demand = filtered_demand[
-        filtered_demand["year"] == selected_year
+        filtered_demand["date"].dt.year.isin(
+            selected_years
+        )
     ]
 
     filtered_forecast = filtered_forecast[
-        filtered_forecast["date"].dt.year == selected_year
+        filtered_forecast["date"].dt.year.isin(
+            selected_years
+        )
     ]
 
 
 # Channel filter
 
-if selected_channel != "All":
+if selected_channels:
 
     filtered_sales = filtered_sales[
-        filtered_sales["channel"] == selected_channel
+        filtered_sales["channel"].isin(
+            selected_channels
+        )
     ]
 
 
 # =========================================================
-# KEY METRICS
+# EXECUTIVE KPIs
 # =========================================================
 
-st.divider()
-
-st.header("📌 Key Metrics")
+st.subheader("📌 Executive Summary")
 
 
 total_sales = filtered_sales[
     "total_value"
 ].sum()
 
+
 total_transactions = filtered_sales[
     "receipt_id"
 ].nunique()
+
 
 total_quantity = filtered_sales[
     "quantity"
 ].sum()
 
+
 total_stores = filtered_sales[
     "store_id"
 ].nunique()
+
 
 total_products = filtered_sales[
     "sku_id"
 ].nunique()
 
 
-col1, col2, col3, col4, col5 = st.columns(5)
-
-
-col1.metric(
-    "Total Sales",
-    f"{total_sales:,.0f}"
+average_order_value = (
+    total_sales / total_transactions
+    if total_transactions > 0
+    else 0
 )
 
-col2.metric(
+
+kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6)
+
+
+kpi1.metric(
+    "Total Sales",
+    f"₹{total_sales:,.0f}"
+)
+
+
+kpi2.metric(
     "Transactions",
     f"{total_transactions:,}"
 )
 
-col3.metric(
+
+kpi3.metric(
     "Quantity Sold",
     f"{total_quantity:,}"
 )
 
-col4.metric(
+
+kpi4.metric(
     "Stores",
     f"{total_stores:,}"
 )
 
-col5.metric(
+
+kpi5.metric(
     "Products",
     f"{total_products:,}"
 )
 
 
+kpi6.metric(
+    "Avg Order Value",
+    f"₹{average_order_value:,.2f}"
+)
+
+
 # =========================================================
-# SALES & DEMAND TRENDS
+# SALES TREND
 # =========================================================
 
 st.divider()
 
-col1, col2 = st.columns(2)
+left, right = st.columns([2, 1])
 
 
-# -----------------------------
+# ---------------------------------------------------------
 # SALES TREND
-# -----------------------------
+# ---------------------------------------------------------
 
-with col1:
+with left:
 
-    st.header("📈 Sales Trend")
+    st.subheader("📈 Sales Trend")
 
     daily_sales = (
         filtered_sales
         .groupby("date")["total_value"]
         .sum()
+        .reset_index()
     )
 
-    st.line_chart(
-        daily_sales
+    fig_sales = px.line(
+        daily_sales,
+        x="date",
+        y="total_value",
+        title="Daily Sales Trend"
     )
 
-
-# -----------------------------
-# DEMAND TREND
-# -----------------------------
-
-with col2:
-
-    st.header("📊 Demand Trend")
-
-    daily_demand = (
-        filtered_demand
-        .groupby("date")["demand"]
-        .sum()
+    fig_sales.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Sales",
+        hovermode="x unified"
     )
 
-    st.line_chart(
-        daily_demand
+    st.plotly_chart(
+        fig_sales,
+        use_container_width=True
     )
 
 
-# =========================================================
-# FORECAST & CHANNEL
-# =========================================================
-
-col3, col4 = st.columns(2)
-
-
-# -----------------------------
-# ACTUAL VS FORECAST
-# -----------------------------
-
-with col3:
-
-    st.header("🔮 Actual vs Forecast")
-
-    forecast_chart = filtered_forecast[
-        [
-            "date",
-            "actual_demand",
-            "predicted_demand"
-        ]
-    ].set_index("date")
-
-    st.line_chart(
-        forecast_chart
-    )
-
-
-# -----------------------------
+# ---------------------------------------------------------
 # SALES BY CHANNEL
-# -----------------------------
+# ---------------------------------------------------------
 
-with col4:
+with right:
 
-    st.header("🛒 Sales by Channel")
+    st.subheader("🛒 Sales by Channel")
 
     channel_sales = (
         filtered_sales
         .groupby("channel")["total_value"]
         .sum()
-        .sort_values(
-            ascending=False
-        )
+        .reset_index()
     )
 
-    st.bar_chart(
-        channel_sales
+    fig_channel = px.pie(
+        channel_sales,
+        names="channel",
+        values="total_value",
+        hole=0.35,
+        title="Sales Distribution by Channel"
     )
+
+    st.plotly_chart(
+        fig_channel,
+        use_container_width=True
+    )
+
+
+# =========================================================
+# SALES BY CATEGORY
+# =========================================================
+
+st.divider()
+
+st.subheader("📊 Sales by Category")
+
+
+# Check whether category exists
+
+if "category" in filtered_sales.columns:
+
+    category_sales = (
+        filtered_sales
+        .groupby("category")["total_value"]
+        .sum()
+        .sort_values(
+            ascending=True
+        )
+        .reset_index()
+    )
+
+    fig_category = px.bar(
+        category_sales,
+        x="total_value",
+        y="category",
+        orientation="h",
+        title="Sales by Category"
+    )
+
+    fig_category.update_layout(
+        xaxis_title="Sales",
+        yaxis_title="Category"
+    )
+
+    st.plotly_chart(
+        fig_category,
+        use_container_width=True
+    )
+
+else:
+
+    st.info(
+        "Category column is not available in "
+        "sales_transactions_cleaned.csv."
+    )
+
+
+# =========================================================
+# STORE-WISE SALES
+# =========================================================
+
+st.divider()
+
+st.subheader("🏪 Store-wise Sales")
+
+
+store_sales = (
+    filtered_sales
+    .groupby("store_id")["total_value"]
+    .sum()
+    .sort_values(
+        ascending=False
+    )
+    .reset_index()
+)
+
+
+fig_store = px.bar(
+    store_sales,
+    x="store_id",
+    y="total_value",
+    title="Sales by Store"
+)
+
+
+fig_store.update_layout(
+    xaxis_title="Store",
+    yaxis_title="Sales"
+)
+
+
+st.plotly_chart(
+    fig_store,
+    use_container_width=True
+)
+
+
+# =========================================================
+# DEMAND ANALYSIS
+# =========================================================
+
+st.divider()
+
+st.subheader("📊 Demand Analysis")
+
+
+demand_left, demand_right = st.columns(2)
+
+
+# ---------------------------------------------------------
+# DEMAND TREND
+# ---------------------------------------------------------
+
+with demand_left:
+
+    st.write("### Demand Trend")
+
+    daily_demand = (
+        filtered_demand
+        .groupby("date")["demand"]
+        .sum()
+        .reset_index()
+    )
+
+    fig_demand = px.line(
+        daily_demand,
+        x="date",
+        y="demand",
+        title="Daily Demand"
+    )
+
+    st.plotly_chart(
+        fig_demand,
+        use_container_width=True
+    )
+
+
+# ---------------------------------------------------------
+# ACTUAL VS FORECAST
+# ---------------------------------------------------------
+
+with demand_right:
+
+    st.write("### Actual vs Forecast")
+
+    if (
+        "actual_demand" in filtered_forecast.columns
+        and
+        "predicted_demand" in filtered_forecast.columns
+    ):
+
+        forecast_chart = filtered_forecast[
+            [
+                "date",
+                "actual_demand",
+                "predicted_demand"
+            ]
+        ].copy()
+
+        forecast_chart = forecast_chart.set_index(
+            "date"
+        )
+
+        st.line_chart(
+            forecast_chart
+        )
+
+    else:
+
+        st.info(
+            "Forecast columns are not available."
+        )
 
 
 # =========================================================
@@ -367,18 +537,34 @@ with col4:
 
 st.divider()
 
-st.header("📅 Yearly Sales")
+st.subheader("📅 Year-wise Sales")
 
 
 yearly_sales = (
     sales_df
     .groupby("year")["total_value"]
     .sum()
+    .reset_index()
 )
 
 
-st.bar_chart(
-    yearly_sales
+fig_year = px.bar(
+    yearly_sales,
+    x="year",
+    y="total_value",
+    title="Sales by Year"
+)
+
+
+fig_year.update_layout(
+    xaxis_title="Year",
+    yaxis_title="Sales"
+)
+
+
+st.plotly_chart(
+    fig_year,
+    use_container_width=True
 )
 
 
@@ -388,10 +574,18 @@ st.bar_chart(
 
 st.divider()
 
-st.header("⚠️ Inventory Risk")
+st.subheader("⚠️ Inventory Risk")
 
 
 if inventory_df is not None:
+
+    risk_counts = (
+        inventory_df[
+            "final_risk_level"
+        ]
+        .value_counts()
+    )
+
 
     critical_inventory = (
         inventory_df[
@@ -401,6 +595,7 @@ if inventory_df is not None:
         .sum()
     )
 
+
     high_risk_inventory = (
         inventory_df[
             "final_risk_level"
@@ -409,6 +604,7 @@ if inventory_df is not None:
         .sum()
     )
 
+
     medium_risk_inventory = (
         inventory_df[
             "final_risk_level"
@@ -416,6 +612,7 @@ if inventory_df is not None:
         .eq("Medium Risk")
         .sum()
     )
+
 
     low_risk_inventory = (
         inventory_df[
@@ -426,50 +623,97 @@ if inventory_df is not None:
     )
 
 
-    risk_col1, risk_col2, risk_col3, risk_col4 = st.columns(4)
+    risk1, risk2, risk3, risk4 = st.columns(4)
 
 
-    risk_col1.metric(
+    risk1.metric(
         "Critical",
         f"{critical_inventory:,}"
     )
 
-    risk_col2.metric(
+
+    risk2.metric(
         "High Risk",
         f"{high_risk_inventory:,}"
     )
 
-    risk_col3.metric(
+
+    risk3.metric(
         "Medium Risk",
         f"{medium_risk_inventory:,}"
     )
 
-    risk_col4.metric(
+
+    risk4.metric(
         "Low Risk",
         f"{low_risk_inventory:,}"
     )
 
 
-    risk_distribution = (
-        inventory_df[
-            "final_risk_level"
-        ]
-        .value_counts()
+    fig_risk = px.bar(
+        x=risk_counts.index,
+        y=risk_counts.values,
+        labels={
+            "x": "Risk Level",
+            "y": "Number of Products"
+        },
+        title="Inventory Risk Distribution"
     )
 
 
-    st.bar_chart(
-        risk_distribution
+    st.plotly_chart(
+        fig_risk,
+        use_container_width=True
     )
 
 
 else:
 
     st.info(
-        "Inventory risk dataset is not available yet. "
-        "Add inventory_risk_scoring.csv to "
-        "data/processed to enable this section."
+        "Inventory risk dataset is not available yet."
     )
+
+
+# =========================================================
+# TOP PRODUCTS
+# =========================================================
+
+st.divider()
+
+st.subheader("🏆 Top Products")
+
+
+top_products = (
+    filtered_sales
+    .groupby("sku_id")["total_value"]
+    .sum()
+    .sort_values(
+        ascending=False
+    )
+    .head(10)
+    .reset_index()
+)
+
+
+fig_products = px.bar(
+    top_products,
+    x="total_value",
+    y="sku_id",
+    orientation="h",
+    title="Top 10 Products by Sales"
+)
+
+
+fig_products.update_layout(
+    xaxis_title="Sales",
+    yaxis_title="Product"
+)
+
+
+st.plotly_chart(
+    fig_products,
+    use_container_width=True
+)
 
 
 # =========================================================
@@ -478,13 +722,17 @@ else:
 
 st.divider()
 
-st.header("📌 Project Overview")
+st.subheader("📌 Project Overview")
 
 st.write(
     """
-    This dashboard analyzes online retail data to understand
-    sales demand, forecast future demand, identify inventory
-    risks, and support data-driven business decisions.
+    This Retail Executive Dashboard provides an overview of
+    retail sales performance, customer transactions, demand
+    trends, demand forecasting and inventory risk.
+
+    The dashboard helps management understand sales patterns,
+    channel performance, store performance and inventory risk
+    so that better business decisions can be made.
     """
 )
 
@@ -496,7 +744,6 @@ st.write(
 st.divider()
 
 st.caption(
-    "Online Retail Demand Forecasting | "
-    "Data Science Project"
+    "Retail Executive Dashboard | "
+    "Online Retail Demand Forecasting Project"
 )
-exit()
