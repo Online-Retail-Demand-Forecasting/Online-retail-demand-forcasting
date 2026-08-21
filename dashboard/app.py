@@ -16,6 +16,149 @@ st.set_page_config(
 
 
 # =========================================================
+# PROFESSIONAL DASHBOARD THEME
+# =========================================================
+
+st.markdown("""
+<style>
+    /* ---------- Global ---------- */
+    .stApp {
+        background: #F6F8FB;
+    }
+
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1500px;
+    }
+
+    /* ---------- Header ---------- */
+    .dashboard-header {
+        background: linear-gradient(135deg, #0F2747 0%, #183B63 100%);
+        padding: 28px 32px;
+        border-radius: 14px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 18px rgba(15, 39, 71, 0.12);
+    }
+
+    .dashboard-title {
+        color: white;
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .dashboard-subtitle {
+        color: #DCE8F5;
+        font-size: 16px;
+        margin: 7px 0 0 0;
+    }
+
+    /* ---------- Section headings ---------- */
+    .section-header {
+        font-size: 21px;
+        font-weight: 700;
+        color: #17324D;
+        margin-top: 8px;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #DCE3EB;
+    }
+
+    /* ---------- KPI cards ---------- */
+    div[data-testid="stMetric"] {
+        background: white;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 16px 18px;
+        box-shadow: 0 3px 10px rgba(15, 39, 71, 0.05);
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #64748B !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #17324D !important;
+        font-size: 24px !important;
+        font-weight: 700 !important;
+    }
+
+    /* ---------- Sidebar ---------- */
+    section[data-testid="stSidebar"] {
+        background: #FFFFFF;
+        border-right: 1px solid #E2E8F0;
+    }
+
+    section[data-testid="stSidebar"] .block-container {
+        padding-top: 2rem;
+    }
+
+    .sidebar-title {
+        color: #17324D;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .sidebar-caption {
+        color: #64748B;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    /* ---------- Charts / containers ---------- */
+    div[data-testid="stPlotlyChart"] {
+        background: white;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 3px 10px rgba(15, 39, 71, 0.04);
+    }
+
+    /* ---------- Info box ---------- */
+    div[data-testid="stAlert"] {
+        border-radius: 10px;
+    }
+
+    /* ---------- Footer ---------- */
+    .dashboard-footer {
+        text-align: center;
+        color: #718096;
+        font-size: 12px;
+        padding: 18px 0 4px 0;
+        border-top: 1px solid #DCE3EB;
+        margin-top: 28px;
+    }
+
+    /* ---------- Hide unnecessary Streamlit chrome ---------- */
+    #MainMenu {
+        visibility: hidden;
+    }
+
+    footer {
+        visibility: hidden;
+    }
+
+    /* ---------- Responsive spacing ---------- */
+    @media (max-width: 900px) {
+        .dashboard-title {
+            font-size: 26px;
+        }
+
+        .dashboard-header {
+            padding: 22px;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# =========================================================
 # PATHS
 # =========================================================
 
@@ -118,26 +261,80 @@ if "year" not in sales_df.columns:
 
 
 # =========================================================
+# PROFESSIONAL CHART SETTINGS
+# =========================================================
+
+PLOTLY_TEMPLATE = "plotly_white"
+
+def style_chart(fig, title=None):
+    """Apply a consistent professional style to Plotly charts."""
+    fig.update_layout(
+        template=PLOTLY_TEMPLATE,
+        title=title,
+        font=dict(
+            family="Arial",
+            size=12,
+            color="#334155"
+        ),
+        title_font=dict(
+            family="Arial",
+            size=16,
+            color="#17324D"
+        ),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        margin=dict(l=55, r=30, t=55, b=45),
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=12,
+            font_family="Arial"
+        ),
+        legend=dict(
+            bgcolor="rgba(255,255,255,0)",
+            borderwidth=0
+        )
+    )
+
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor="#E8EDF3",
+        zeroline=False,
+        linecolor="#D5DDE6"
+    )
+
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="#E8EDF3",
+        zeroline=False,
+        linecolor="#D5DDE6"
+    )
+
+    return fig
+
+
+# =========================================================
 # HEADER
 # =========================================================
 
-st.title("🛍️ Retail Executive Dashboard")
-
-st.markdown(
-    "### Sales, Demand Forecasting & Inventory Intelligence"
-)
-
-st.caption(
-    "Executive overview of retail sales performance, "
-    "customer transactions, demand and inventory risk."
-)
+st.markdown("""
+<div class="dashboard-header">
+    <div class="dashboard-title">Retail Executive Dashboard</div>
+    <div class="dashboard-subtitle">
+        Sales, Demand Forecasting & Inventory Intelligence
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # =========================================================
 # SIDEBAR FILTERS
 # =========================================================
 
-st.sidebar.header("🎛️ Filters")
+st.sidebar.markdown(
+    '<div class="sidebar-title">Dashboard Filters</div>'
+    '<div class="sidebar-caption">Use the controls below to refine the analysis.</div>',
+    unsafe_allow_html=True
+)
 
 
 # Year filter
@@ -216,10 +413,22 @@ if selected_channels:
 
 
 # =========================================================
+# DATA VALIDATION
+# =========================================================
+
+if filtered_sales.empty:
+    st.warning(
+        "No sales records match the selected filters. "
+        "Please select at least one year and channel."
+    )
+    st.stop()
+
+
+# =========================================================
 # EXECUTIVE KPIs
 # =========================================================
 
-st.subheader("📌 Executive Summary")
+st.markdown('<div class="section-header">Executive Summary</div>', unsafe_allow_html=True)
 
 
 total_sales = filtered_sales[
@@ -308,7 +517,7 @@ left, right = st.columns([2, 1])
 
 with left:
 
-    st.subheader("📈 Sales Trend")
+    st.markdown('<div class="section-header">Sales Trend</div>', unsafe_allow_html=True)
 
     daily_sales = (
         filtered_sales
@@ -330,6 +539,8 @@ with left:
         hovermode="x unified"
     )
 
+    style_chart(fig_sales)
+
     st.plotly_chart(
         fig_sales,
         use_container_width=True
@@ -342,7 +553,7 @@ with left:
 
 with right:
 
-    st.subheader("🛒 Sales by Channel")
+    st.markdown('<div class="section-header">Sales by Channel</div>', unsafe_allow_html=True)
 
     channel_sales = (
         filtered_sales
@@ -359,6 +570,8 @@ with right:
         title="Sales Distribution by Channel"
     )
 
+    style_chart(fig_channel)
+
     st.plotly_chart(
         fig_channel,
         use_container_width=True
@@ -371,7 +584,7 @@ with right:
 
 st.divider()
 
-st.subheader("📊 Sales by Category")
+st.markdown('<div class="section-header">Sales by Category</div>', unsafe_allow_html=True)
 
 
 # Check whether category exists
@@ -401,6 +614,8 @@ if "category" in filtered_sales.columns:
         yaxis_title="Category"
     )
 
+    style_chart(fig_category)
+
     st.plotly_chart(
         fig_category,
         use_container_width=True
@@ -420,7 +635,7 @@ else:
 
 st.divider()
 
-st.subheader("🏪 Store-wise Sales")
+st.markdown('<div class="section-header">Store-wise Sales</div>', unsafe_allow_html=True)
 
 
 store_sales = (
@@ -460,7 +675,7 @@ st.plotly_chart(
 
 st.divider()
 
-st.subheader("📊 Demand Analysis")
+st.markdown('<div class="section-header">Demand Analysis</div>', unsafe_allow_html=True)
 
 
 demand_left, demand_right = st.columns(2)
@@ -472,7 +687,7 @@ demand_left, demand_right = st.columns(2)
 
 with demand_left:
 
-    st.write("### Demand Trend")
+    st.markdown("**Demand Trend**")
 
     daily_demand = (
         filtered_demand
@@ -488,6 +703,8 @@ with demand_left:
         title="Daily Demand"
     )
 
+    style_chart(fig_demand)
+
     st.plotly_chart(
         fig_demand,
         use_container_width=True
@@ -500,7 +717,7 @@ with demand_left:
 
 with demand_right:
 
-    st.write("### Actual vs Forecast")
+    st.markdown("**Actual vs Forecast**")
 
     if (
         "actual_demand" in filtered_forecast.columns
@@ -537,7 +754,7 @@ with demand_right:
 
 st.divider()
 
-st.subheader("📅 Year-wise Sales")
+st.markdown('<div class="section-header">Year-wise Sales</div>', unsafe_allow_html=True)
 
 
 yearly_sales = (
@@ -574,7 +791,7 @@ st.plotly_chart(
 
 st.divider()
 
-st.subheader("⚠️ Inventory Risk")
+st.markdown('<div class="section-header">Inventory Risk</div>', unsafe_allow_html=True)
 
 
 if inventory_df is not None:
@@ -661,6 +878,8 @@ if inventory_df is not None:
     )
 
 
+    style_chart(fig_risk)
+
     st.plotly_chart(
         fig_risk,
         use_container_width=True
@@ -680,7 +899,7 @@ else:
 
 st.divider()
 
-st.subheader("🏆 Top Products")
+st.markdown('<div class="section-header">Top Products</div>', unsafe_allow_html=True)
 
 
 top_products = (
@@ -722,7 +941,7 @@ st.plotly_chart(
 
 st.divider()
 
-st.subheader("📌 Project Overview")
+st.markdown('<div class="section-header">Project Overview</div>', unsafe_allow_html=True)
 
 st.write(
     """
@@ -743,7 +962,9 @@ st.write(
 
 st.divider()
 
-st.caption(
-    "Retail Executive Dashboard | "
-    "Online Retail Demand Forecasting Project"
-)
+st.markdown("""
+<div class="dashboard-footer">
+    Retail Executive Dashboard &nbsp;|&nbsp;
+    Online Retail Demand Forecasting Project
+</div>
+""", unsafe_allow_html=True)
