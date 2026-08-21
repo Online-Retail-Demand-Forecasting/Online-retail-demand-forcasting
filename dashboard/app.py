@@ -2095,6 +2095,227 @@ if (
         }
     )
 
+# ============================================================
+# CATEGORY PERFORMANCE CHARTS
+# ============================================================
+
+if (
+    "category" in filtered_sales.columns
+    and "total_value" in filtered_sales.columns
+):
+
+    st.divider()
+
+    st.markdown(
+        """
+        <div class="section-header">
+            Category Analytics
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # ========================================================
+    # CATEGORY SALES SUMMARY
+    # ========================================================
+
+    category_chart_data = (
+        filtered_sales
+        .groupby("category")
+        .agg(
+            Sales=("total_value", "sum"),
+            Quantity=(
+                "quantity",
+                "sum"
+            )
+            if "quantity" in filtered_sales.columns
+            else (
+                "total_value",
+                "count"
+            )
+        )
+        .reset_index()
+        .sort_values(
+            "Sales",
+            ascending=False
+        )
+    )
+
+    # ========================================================
+    # CATEGORY SALES + DISTRIBUTION
+    # ========================================================
+
+    category_left, category_right = st.columns(
+        [2, 1]
+    )
+
+    # ========================================================
+    # CATEGORY SALES BAR CHART
+    # ========================================================
+
+    with category_left:
+
+        fig_category_sales = px.bar(
+
+            category_chart_data,
+
+            x="category",
+
+            y="Sales",
+
+            title="Sales by Category",
+
+            text="Sales"
+        )
+
+        fig_category_sales.update_traces(
+
+            texttemplate="₹%{y:,.0f}",
+
+            textposition="outside",
+
+            hovertemplate=
+            "<b>%{x}</b>"
+            "<br>Sales: ₹%{y:,.0f}"
+            "<extra></extra>"
+        )
+
+        fig_category_sales.update_layout(
+
+            xaxis_title="Category",
+
+            yaxis_title="Sales (₹)",
+
+            xaxis_tickangle=-30,
+
+            uniformtext_minsize=8,
+
+            uniformtext_mode="hide"
+        )
+
+        style_chart(
+            fig_category_sales,
+            height=430
+        )
+
+        st.plotly_chart(
+
+            fig_category_sales,
+
+            use_container_width=True,
+
+            key="category_sales_chart"
+        )
+
+    # ========================================================
+    # CATEGORY SALES DONUT
+    # ========================================================
+
+    with category_right:
+
+        fig_category_pie = px.pie(
+
+            category_chart_data,
+
+            names="category",
+
+            values="Sales",
+
+            hole=0.50,
+
+            title="Category Sales Distribution"
+        )
+
+        fig_category_pie.update_traces(
+
+            textposition="inside",
+
+            textinfo="percent",
+
+            hovertemplate=
+            "<b>%{label}</b>"
+            "<br>Sales: ₹%{value:,.0f}"
+            "<br>Share: %{percent}"
+            "<extra></extra>"
+        )
+
+        style_chart(
+            fig_category_pie,
+            height=430
+        )
+
+        st.plotly_chart(
+
+            fig_category_pie,
+
+            use_container_width=True,
+
+            key="category_distribution_chart"
+        )
+
+    # ========================================================
+    # CATEGORY QUANTITY CHART
+    # ========================================================
+
+    st.markdown(
+        "**Quantity Sold by Category**"
+    )
+
+    category_quantity = (
+        category_chart_data
+        .sort_values(
+            "Quantity",
+            ascending=False
+        )
+    )
+
+    fig_category_quantity = px.bar(
+
+        category_quantity,
+
+        x="category",
+
+        y="Quantity",
+
+        title="Quantity Sold by Category",
+
+        text="Quantity"
+    )
+
+    fig_category_quantity.update_traces(
+
+        texttemplate="%{y:,.0f}",
+
+        textposition="outside",
+
+        hovertemplate=
+        "<b>%{x}</b>"
+        "<br>Quantity Sold: %{y:,.0f}"
+        "<extra></extra>"
+    )
+
+    fig_category_quantity.update_layout(
+
+        xaxis_title="Category",
+
+        yaxis_title="Quantity Sold",
+
+        xaxis_tickangle=-30
+    )
+
+    style_chart(
+        fig_category_quantity,
+        height=430
+    )
+
+    st.plotly_chart(
+
+        fig_category_quantity,
+
+        use_container_width=True,
+
+        key="category_quantity_chart"
+    )
 
 # ============================================================
 # PROJECT OVERVIEW
