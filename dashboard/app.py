@@ -394,15 +394,27 @@ def load_inventory_risk():
 @st.cache_data
 def load_sku_master():
 
-    path = os.path.join(
+    # Keep the existing processed location first.
+    processed_path = os.path.join(
         PROCESSED_PATH,
         "sku_master.csv"
     )
 
-    if not os.path.exists(path):
-        return None
+    # Also support the original/raw SKU master location.
+    raw_path = os.path.join(
+        BASE_DIR,
+        "data",
+        "raw",
+        "sku_master.csv"
+    )
 
-    return pd.read_csv(path)
+    if os.path.exists(processed_path):
+        return pd.read_csv(processed_path)
+
+    if os.path.exists(raw_path):
+        return pd.read_csv(raw_path)
+
+    return None
 
 
 # ============================================================
@@ -429,8 +441,7 @@ def find_column(df, possible_names):
         return None
 
     normalized = {
-        str(col).strip().lower().replace(" ", "_"):
-        col
+        str(col).strip().lower().replace(" ", "_"): col
         for col in df.columns
     }
 
@@ -449,7 +460,12 @@ def find_column(df, possible_names):
     return None
 
 
-if sku_master_df is not None:
+# Validate sales data before adding the category column.
+if sales_df is not None:
+
+    # ------------------------------------------------------------
+    # FIND SKU COLUMN IN SALES DATA
+    # ------------------------------------------------------------
 
     sales_sku_col = find_column(
         sales_df,
@@ -461,99 +477,112 @@ if sku_master_df is not None:
         ]
     )
 
-    master_sku_col = find_column(
-        sku_master_df,
-        [
-            "sku_id",
-            "sku",
-            "product_id",
-            "product_code"
-        ]
-    )
+    # ------------------------------------------------------------
+    # CONNECT CATEGORY FROM SKU MASTER
+    # ------------------------------------------------------------
 
-    category_col = find_column(
-        sku_master_df,
-        [
-            "category",
-            "product_category",
-            "category_name"
-        ]
-    )
+    if sku_master_df is not None and sales_sku_col is not None:
 
-    if (
-        sales_sku_col is not None
-        and master_sku_col is not None
-        and category_col is not None
-    ):
-
-        # Make copies so original data remains unchanged
-        sku_lookup = sku_master_df[
+        master_sku_col = find_column(
+            sku_master_df,
             [
-                master_sku_col,
-                category_col
+                "sku_id",
+                "sku",
+                "product_id",
+                "product_code"
             ]
-        ].copy()
-
-        # Normalize SKU values
-        sales_df["_sku_key"] = (
-            sales_df[sales_sku_col]
-            .astype(str)
-            .str.strip()
-            .str.upper()
         )
 
-        sku_lookup["_sku_key"] = (
-            sku_lookup[master_sku_col]
-            .astype(str)
-            .str.strip()
-            .str.upper()
+        category_col = find_column(
+            sku_master_df,
+            [
+                "category",
+                "product_category",
+                "category_name"
+            ]
         )
 
-        # Remove duplicate SKU records
-        sku_lookup = (
-            sku_lookup[
+        if (
+            master_sku_col is not None
+            and category_col is not None
+        ):
+
+            # Make a small lookup table containing only SKU and category.
+            sku_lookup = sku_master_df[
                 [
-                    "_sku_key",
+                    master_sku_col,
                     category_col
                 ]
-            ]
-            .drop_duplicates(
-                subset="_sku_key"
+            ].copy()
+
+            # Normalize both SKU columns so values such as
+            # "SKU04551" and " sku04551 " match correctly.
+            sales_df["_sku_key"] = (
+                sales_df[sales_sku_col]
+                .astype(str)
+                .str.strip()
+                .str.upper()
             )
-        )
 
-        # Merge category
-        sales_df = sales_df.merge(
-            sku_lookup,
-            on="_sku_key",
-            how="left"
-        )
+            sku_lookup["_sku_key"] = (
+                sku_lookup[master_sku_col]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
 
-        # Rename category consistently
-        sales_df["category"] = (
-            sales_df[category_col]
-            .fillna("Uncategorized")
-            .astype(str)
-            .str.strip()
-        )
+            # Keep one category record per SKU.
+            sku_lookup = (
+                sku_lookup[
+                    [
+                        "_sku_key",
+                        category_col
+                    ]
+                ]
+                .drop_duplicates(
+                    subset="_sku_key"
+                )
+            )
 
-        # Remove temporary columns
-        sales_df.drop(
-            columns=[
-                "_sku_key",
-                category_col
-            ],
-            inplace=True,
-            errors="ignore"
-        )
+            # Add category to the sales data.
+            sales_df = sales_df.merge(
+                sku_lookup,
+                on="_sku_key",
+                how="left"
+            )
+
+            # Create the final category column.
+            sales_df["category"] = (
+                sales_df[category_col]
+                .fillna("Uncategorized")
+                .astype(str)
+                .str.strip()
+            )
+
+            # Treat blank category values as Uncategorized.
+            sales_df.loc[
+                sales_df["category"].eq(""),
+                "category"
+            ] = "Uncategorized"
+
+            # Remove temporary columns.
+            sales_df.drop(
+                columns=[
+                    "_sku_key",
+                    category_col
+                ],
+                inplace=True,
+                errors="ignore"
+            )
+
+        else:
+
+            sales_df["category"] = "Uncategorized"
 
     else:
 
         sales_df["category"] = "Uncategorized"
 
-else:
-
-    sales_df["category"] = "Uncategorized"
 # ============================================================
 # VALIDATE MAIN DATA
 # ============================================================
@@ -2053,6 +2082,9 @@ datasets = {
 
     "Sales Transactions":
         sales_df,
+
+    "SKU Master":
+        sku_master_df,
 
     "Daily Demand Features":
         demand_df,
