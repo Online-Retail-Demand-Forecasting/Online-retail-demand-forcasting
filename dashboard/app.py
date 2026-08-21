@@ -1113,22 +1113,44 @@ st.markdown(
 )
 
 
-# NOTE:
-# This section intentionally uses the category column exactly
-# as your current application does.
-# No category mapping logic is changed here.
+# ============================================================
+# SALES BY CATEGORY
+# ============================================================
 
-if "category" in filtered_sales.columns:
+st.divider()
+
+st.markdown(
+    """
+    ## Sales by Category
+    """
+)
+
+
+if (
+    "category" in filtered_sales.columns
+    and "total_value" in filtered_sales.columns
+):
 
     category_sales = (
-
         filtered_sales
-        .groupby("category")["total_value"]
+        .groupby("category", as_index=False)
+        ["total_value"]
         .sum()
         .sort_values(
+            "total_value",
             ascending=True
         )
-        .reset_index()
+    )
+
+
+    # Remove empty categories
+    category_sales["category"] = (
+        category_sales["category"]
+        .fillna("Uncategorized")
+        .replace(
+            "",
+            "Uncategorized"
+        )
     )
 
 
@@ -1142,7 +1164,7 @@ if "category" in filtered_sales.columns:
 
         orientation="h",
 
-        title="Sales by Category",
+        title="Sales Performance by Category",
 
         text="total_value"
     )
@@ -1167,12 +1189,16 @@ if "category" in filtered_sales.columns:
 
         yaxis_title="Category",
 
-        dragmode="zoom",
+        height=500,
 
-        height=max(
-            400,
-            70 * len(category_sales)
-        )
+        margin=dict(
+            l=80,
+            r=80,
+            t=70,
+            b=60
+        ),
+
+        hovermode="closest"
     )
 
 
@@ -1187,15 +1213,15 @@ if "category" in filtered_sales.columns:
 
         use_container_width=True,
 
-        key="category_chart"
+        key="sales_category_chart"
     )
 
 
 else:
 
-    st.info(
-        "Category column is not available in "
-        "sales_transactions_cleaned.csv."
+    st.warning(
+        "Category information could not be connected "
+        "to the sales data."
     )
 
 
