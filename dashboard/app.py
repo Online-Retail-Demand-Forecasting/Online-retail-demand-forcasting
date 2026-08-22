@@ -20,7 +20,54 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# ============================================================
+# MULTI-PAGE NAVIGATION
+# ============================================================
 
+sales_page = st.Page(
+    "pages/1_Sales_Analytics.py",
+    title="Sales Analytics",
+    icon="📊"
+)
+
+forecast_page = st.Page(
+    "pages/2_Forecast.py",
+    title="Forecast",
+    icon="🔮"
+)
+
+inventory_page = st.Page(
+    "pages/3_Inventory.py",
+    title="Inventory",
+    icon="📦"
+)
+
+risk_page = st.Page(
+    "pages/4_Risk.py",
+    title="Risk",
+    icon="⚠️"
+)
+
+product_page = st.Page(
+    "pages/5_Product_Details.py",
+    title="Product Details",
+    icon="🛍️"
+)
+
+executive_page = st.Page(
+    "pages/6_Executive_Summary.py",
+    title="Executive Summary",
+    icon="📈"
+)
+
+pg = st.navigation([
+    sales_page,
+    forecast_page,
+    inventory_page,
+    risk_page,
+    product_page,
+    executive_page
+])
 
 # ============================================================
 # PROFESSIONAL DASHBOARD THEME
