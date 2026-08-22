@@ -1,5 +1,5 @@
 # ============================================================
-# RETAIL EXECUTIVE DASHBOARD
+# RETAIL EXECUTIVE DASHBOARD - HOME PAGE
 # Sales Performance • Demand Forecasting • Inventory Intelligence
 # ============================================================
 
@@ -7,7 +7,6 @@ import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 
 # ============================================================
@@ -20,6 +19,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
 # ============================================================
 # MULTI-PAGE NAVIGATION
 # ============================================================
@@ -68,6 +69,7 @@ pg = st.navigation([
     product_page,
     executive_page
 ])
+
 
 # ============================================================
 # PROFESSIONAL DASHBOARD THEME
@@ -434,6 +436,7 @@ def load_inventory_risk():
 
     return pd.read_csv(path)
 
+
 # ============================================================
 # LOAD SKU MASTER
 # ============================================================
@@ -441,24 +444,27 @@ def load_inventory_risk():
 @st.cache_data
 def load_sku_master():
 
-    # Check the normal project locations first.
     candidate_paths = [
+
         os.path.join(
             PROCESSED_PATH,
             "sku_master.csv"
         ),
+
         os.path.join(
             BASE_DIR,
             "data",
             "raw",
             "sku_master.csv"
         ),
+
         os.path.join(
             BASE_DIR,
             "data1",
             "processed",
             "sku_master.csv"
         ),
+
         os.path.join(
             BASE_DIR,
             "data1",
@@ -467,8 +473,7 @@ def load_sku_master():
         )
     ]
 
-    # If the file is stored elsewhere inside the project,
-    # find it automatically.
+
     for root, dirs, files in os.walk(BASE_DIR):
 
         if "sku_master.csv" in files:
@@ -480,7 +485,7 @@ def load_sku_master():
                 )
             )
 
-    # Remove duplicate paths while preserving order.
+
     checked_paths = []
 
     for path in candidate_paths:
@@ -492,6 +497,7 @@ def load_sku_master():
             if os.path.isfile(path):
 
                 return pd.read_csv(path)
+
 
     return None
 
@@ -510,8 +516,9 @@ inventory_df = load_inventory_risk()
 
 sku_master_df = load_sku_master()
 
+
 # ============================================================
-# CONNECT SALES WITH SKU MASTER
+# HELPER FUNCTIONS
 # ============================================================
 
 def find_column(df, possible_names):
@@ -534,6 +541,7 @@ def find_column(df, possible_names):
         )
 
         if key in normalized:
+
             return normalized[key]
 
     return None
@@ -541,30 +549,15 @@ def find_column(df, possible_names):
 
 def normalize_sku(value):
 
-    """
-    Creates a common SKU key.
-
-    This handles:
-        SKU00001
-        sku00001
-        00001
-        1
-        1.0
-
-    so the sales data can match the SKU master reliably.
-    """
-
     if pd.isna(value):
         return None
 
     value = str(value).strip().upper()
 
-    # Remove a trailing .0 caused by numeric CSV conversion.
     if value.endswith(".0"):
+
         value = value[:-2]
 
-    # If the value already contains SKU + digits,
-    # standardize it to five digits.
     if value.startswith("SKU"):
 
         digits = value[3:]
@@ -573,7 +566,6 @@ def normalize_sku(value):
 
             return "SKU" + digits.zfill(5)
 
-    # If the value is only numeric, convert it to SKU00001 format.
     if value.isdigit():
 
         return "SKU" + value.zfill(5)
@@ -616,13 +608,13 @@ if sales_df is not None:
         ]
     )
 
-    # Remove an old category column if the sales file already
-    # contains one. The SKU master is the authoritative source.
+
     sales_df.drop(
         columns=["category"],
         inplace=True,
         errors="ignore"
     )
+
 
     if (
         sku_master_df is not None
@@ -631,73 +623,98 @@ if sales_df is not None:
         and category_col is not None
     ):
 
-        # Create normalized SKU keys.
-        sales_keys = sales_df[sales_sku_col].map(
-            normalize_sku
-        )
+        sales_keys = sales_df[
+            sales_sku_col
+        ].map(normalize_sku)
 
-        master_keys = sku_master_df[master_sku_col].map(
-            normalize_sku
-        )
+        master_keys = sku_master_df[
+            master_sku_col
+        ].map(normalize_sku)
 
-        # Create a clean SKU -> Category lookup.
+
         sku_category_lookup = pd.DataFrame(
             {
                 "_sku_key": master_keys,
+
                 "_category_value":
                     sku_master_df[category_col]
             }
         )
 
-        sku_category_lookup["_category_value"] = (
-            sku_category_lookup["_category_value"]
+
+        sku_category_lookup[
+            "_category_value"
+        ] = (
+
+            sku_category_lookup[
+                "_category_value"
+            ]
             .astype("string")
             .str.strip()
         )
 
-        # Ignore empty SKU/category records.
+
         sku_category_lookup = (
+
             sku_category_lookup[
-                sku_category_lookup["_sku_key"].notna()
+                sku_category_lookup[
+                    "_sku_key"
+                ].notna()
             ]
+
             .dropna(
-                subset=["_category_value"]
+                subset=[
+                    "_category_value"
+                ]
             )
+
             .drop_duplicates(
                 subset="_sku_key",
                 keep="first"
             )
         )
 
-        # Convert the lookup into a dictionary.
+
         category_lookup = dict(
             zip(
-                sku_category_lookup["_sku_key"],
-                sku_category_lookup["_category_value"]
+                sku_category_lookup[
+                    "_sku_key"
+                ],
+
+                sku_category_lookup[
+                    "_category_value"
+                ]
             )
         )
 
-        # Map every sales SKU to its real category.
+
         sales_df["category"] = (
+
             sales_keys
+
             .map(category_lookup)
+
             .fillna("Uncategorized")
+
             .astype(str)
+
             .str.strip()
         )
 
-        # Treat blank values as Uncategorized.
+
         sales_df.loc[
             sales_df["category"].eq("")
             | sales_df["category"].eq("nan"),
             "category"
         ] = "Uncategorized"
 
+
     else:
 
-        # Keep the dashboard running if the master file
-        # cannot be found or does not contain the required columns.
-        sales_df["category"] = "Uncategorized"
+        sales_df[
+            "category"
+        ] = "Uncategorized"
+
 
 # ============================================================
 # VALIDATE MAIN DATA
@@ -833,6 +850,7 @@ def style_chart(
         hovermode="closest"
     )
 
+
     if height is not None:
 
         fig.update_layout(
@@ -878,6 +896,7 @@ def style_chart(
 st.markdown(
     """
     <style>
+
     .main-title {
         font-size: 32px;
         font-weight: 700;
@@ -891,26 +910,60 @@ st.markdown(
     }
 
     .header-box {
-        background: linear-gradient(135deg, #0F2747, #183B63);
+        background: linear-gradient(
+            135deg,
+            #0F2747,
+            #183B63
+        );
+
         padding: 28px 32px;
+
         border-radius: 14px;
+
         margin-bottom: 28px;
-        box-shadow: 0 6px 18px rgba(15,39,71,0.12);
+
+        box-shadow:
+            0 6px 18px
+            rgba(15,39,71,0.12);
     }
+
     </style>
     """,
     unsafe_allow_html=True
 )
 
+
 st.markdown(
     """
     <div class="header-box">
+
         <div class="main-title">
             Retail Executive Dashboard
         </div>
+
         <div class="main-subtitle">
             Sales Performance • Demand Forecasting • Inventory Intelligence
         </div>
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+st.sidebar.markdown(
+    """
+    <div class="sidebar-title">
+        Dashboard Filters
+    </div>
+
+    <div class="sidebar-caption">
+        Filter the executive overview
+        using the options below.
     </div>
     """,
     unsafe_allow_html=True
@@ -990,7 +1043,7 @@ st.sidebar.caption(
 
 
 # ============================================================
-# APPLY SALES FILTERS
+# APPLY FILTERS
 # ============================================================
 
 filtered_sales = sales_df.copy()
@@ -1012,54 +1065,6 @@ if selected_channels:
             selected_channels
         )
     ]
-
-
-# ============================================================
-# APPLY DEMAND FILTERS
-# ============================================================
-
-if demand_df is not None:
-
-    filtered_demand = demand_df.copy()
-
-    if (
-        selected_years
-        and "date" in filtered_demand.columns
-    ):
-
-        filtered_demand = filtered_demand[
-            filtered_demand["date"]
-            .dt.year
-            .isin(selected_years)
-        ]
-
-else:
-
-    filtered_demand = None
-
-
-# ============================================================
-# APPLY FORECAST FILTERS
-# ============================================================
-
-if forecast_df is not None:
-
-    filtered_forecast = forecast_df.copy()
-
-    if (
-        selected_years
-        and "date" in filtered_forecast.columns
-    ):
-
-        filtered_forecast = filtered_forecast[
-            filtered_forecast["date"]
-            .dt.year
-            .isin(selected_years)
-        ]
-
-else:
-
-    filtered_forecast = None
 
 
 # ============================================================
@@ -1217,7 +1222,7 @@ kpi6.metric(
 
 
 # ============================================================
-# SALES TREND + CHANNEL
+# SALES OVERVIEW
 # ============================================================
 
 st.divider()
@@ -1229,7 +1234,7 @@ left, right = st.columns(
 
 
 # ============================================================
-# DAILY SALES TREND
+# SALES TREND
 # ============================================================
 
 with left:
@@ -1252,9 +1257,13 @@ with left:
         daily_sales = (
 
             filtered_sales
+
             .groupby("date")["total_value"]
+
             .sum()
+
             .reset_index()
+
             .sort_values("date")
         )
 
@@ -1307,7 +1316,7 @@ with left:
 
             use_container_width=True,
 
-            key="daily_sales_chart"
+            key="home_daily_sales_chart"
         )
 
 
@@ -1335,8 +1344,11 @@ with right:
         channel_sales = (
 
             filtered_sales
+
             .groupby("channel")["total_value"]
+
             .sum()
+
             .reset_index()
         )
 
@@ -1380,16 +1392,12 @@ with right:
 
             use_container_width=True,
 
-            key="channel_chart"
+            key="home_channel_chart"
         )
 
 
-######category
-
-
-
 # ============================================================
-# STORE-WISE SALES
+# CATEGORY OVERVIEW
 # ============================================================
 
 st.divider()
@@ -1398,803 +1406,41 @@ st.divider()
 st.markdown(
     """
     <div class="section-header">
-        Store-wise Sales
+        Category Overview
     </div>
     """,
     unsafe_allow_html=True
 )
 
-
-if (
-    "store_id" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
-):
-
-    store_sales = (
-
-        filtered_sales
-        .groupby("store_id")["total_value"]
-        .sum()
-        .sort_values(
-            ascending=False
-        )
-        .head(15)
-        .reset_index()
-    )
-
-
-    fig_store = px.bar(
-
-        store_sales,
-
-        x="store_id",
-
-        y="total_value",
-
-        title="Top 15 Stores by Sales",
-
-        text="total_value"
-    )
-
-
-    fig_store.update_traces(
-
-        texttemplate="₹%{y:,.0f}",
-
-        textposition="outside",
-
-        hovertemplate=
-        "<b>Store %{x}</b>"
-        "<br>Sales: ₹%{y:,.0f}"
-        "<extra></extra>"
-    )
-
-
-    fig_store.update_layout(
-
-        xaxis_title="Store",
-
-        yaxis_title="Sales (₹)",
-
-        dragmode="zoom"
-    )
-
-
-    style_chart(
-        fig_store
-    )
-
-
-    st.plotly_chart(
-
-        fig_store,
-
-        use_container_width=True,
-
-        key="store_chart"
-    )
-
-
-# ============================================================
-# DEMAND ANALYSIS
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Demand Analysis
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-demand_left, demand_right = st.columns(2)
-
-
-# ============================================================
-# DEMAND TREND
-# ============================================================
-
-with demand_left:
-
-    st.markdown(
-        "**Demand Trend**"
-    )
-
-
-    if (
-        filtered_demand is not None
-        and "date" in filtered_demand.columns
-        and "demand" in filtered_demand.columns
-    ):
-
-        filtered_demand["demand"] = pd.to_numeric(
-            filtered_demand["demand"],
-            errors="coerce"
-        ).fillna(0)
-
-
-        daily_demand = (
-
-            filtered_demand
-            .groupby("date")["demand"]
-            .sum()
-            .reset_index()
-            .sort_values("date")
-        )
-
-
-        fig_demand = px.line(
-
-            daily_demand,
-
-            x="date",
-
-            y="demand",
-
-            title="Daily Demand"
-        )
-
-
-        fig_demand.update_traces(
-
-            line_width=2,
-
-            hovertemplate=
-            "<b>%{x|%d %b %Y}</b>"
-            "<br>Demand: %{y:,.0f}"
-            "<extra></extra>"
-        )
-
-
-        fig_demand.update_layout(
-
-            xaxis_title="Date",
-
-            yaxis_title="Demand",
-
-            hovermode="x unified"
-        )
-
-
-        style_chart(
-            fig_demand
-        )
-
-
-        st.plotly_chart(
-
-            fig_demand,
-
-            use_container_width=True,
-
-            key="demand_chart"
-        )
-
-
-    else:
-
-        st.info(
-            "Daily demand dataset is not available."
-        )
-
-
-# ============================================================
-# ACTUAL VS FORECAST
-# ============================================================
-
-with demand_right:
-
-    st.markdown(
-        "**Actual vs Forecast**"
-    )
-
-
-    if (
-        filtered_forecast is not None
-        and "date" in filtered_forecast.columns
-        and "actual_demand" in filtered_forecast.columns
-        and "predicted_demand" in filtered_forecast.columns
-    ):
-
-        forecast_chart = (
-
-            filtered_forecast[
-                [
-                    "date",
-                    "actual_demand",
-                    "predicted_demand"
-                ]
-            ]
-            .copy()
-            .sort_values("date")
-        )
-
-
-        fig_forecast = go.Figure()
-
-
-        fig_forecast.add_trace(
-
-            go.Scatter(
-
-                x=forecast_chart["date"],
-
-                y=forecast_chart["actual_demand"],
-
-                mode="lines",
-
-                name="Actual Demand",
-
-                hovertemplate=
-                "<b>%{x|%d %b %Y}</b>"
-                "<br>Actual: %{y:,.0f}"
-                "<extra></extra>"
-            )
-        )
-
-
-        fig_forecast.add_trace(
-
-            go.Scatter(
-
-                x=forecast_chart["date"],
-
-                y=forecast_chart["predicted_demand"],
-
-                mode="lines",
-
-                name="Predicted Demand",
-
-                hovertemplate=
-                "<b>%{x|%d %b %Y}</b>"
-                "<br>Predicted: %{y:,.0f}"
-                "<extra></extra>"
-            )
-        )
-
-
-        fig_forecast.update_layout(
-
-            title="Actual vs Predicted Demand",
-
-            xaxis_title="Date",
-
-            yaxis_title="Demand",
-
-            hovermode="x unified"
-        )
-
-
-        style_chart(
-            fig_forecast
-        )
-
-
-        st.plotly_chart(
-
-            fig_forecast,
-
-            use_container_width=True,
-
-            key="forecast_chart"
-        )
-
-
-    else:
-
-        st.info(
-            "Forecast columns are not available."
-        )
-
-
-# ============================================================
-# YEAR-WISE SALES
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Year-wise Sales
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-if (
-    "year" in sales_df.columns
-    and "total_value" in sales_df.columns
-):
-
-    yearly_sales = (
-
-        sales_df
-        .groupby("year")["total_value"]
-        .sum()
-        .reset_index()
-        .sort_values("year")
-    )
-
-
-    fig_year = px.bar(
-
-        yearly_sales,
-
-        x="year",
-
-        y="total_value",
-
-        title="Sales by Year",
-
-        text="total_value"
-    )
-
-
-    fig_year.update_traces(
-
-        texttemplate="₹%{y:,.0f}",
-
-        textposition="outside",
-
-        hovertemplate=
-        "<b>%{x}</b>"
-        "<br>Sales: ₹%{y:,.0f}"
-        "<extra></extra>"
-    )
-
-
-    fig_year.update_layout(
-
-        xaxis_title="Year",
-
-        yaxis_title="Sales (₹)"
-    )
-
-
-    style_chart(
-        fig_year
-    )
-
-
-    st.plotly_chart(
-
-        fig_year,
-
-        use_container_width=True,
-
-        key="year_chart"
-    )
-
-
-# ============================================================
-# INVENTORY RISK
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Inventory Risk
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-if inventory_df is not None:
-
-    if "final_risk_level" in inventory_df.columns:
-
-        risk_counts = (
-
-            inventory_df[
-                "final_risk_level"
-            ]
-            .astype(str)
-            .str.strip()
-            .value_counts()
-        )
-
-
-        critical_inventory = (
-
-            inventory_df[
-                "final_risk_level"
-            ]
-            .astype(str)
-            .str.strip()
-            .eq("Critical")
-            .sum()
-        )
-
-
-        high_risk_inventory = (
-
-            inventory_df[
-                "final_risk_level"
-            ]
-            .astype(str)
-            .str.strip()
-            .eq("High Risk")
-            .sum()
-        )
-
-
-        medium_risk_inventory = (
-
-            inventory_df[
-                "final_risk_level"
-            ]
-            .astype(str)
-            .str.strip()
-            .eq("Medium Risk")
-            .sum()
-        )
-
-
-        low_risk_inventory = (
-
-            inventory_df[
-                "final_risk_level"
-            ]
-            .astype(str)
-            .str.strip()
-            .eq("Low Risk")
-            .sum()
-        )
-
-
-        risk1, risk2, risk3, risk4 = (
-            st.columns(4)
-        )
-
-
-        risk1.metric(
-            "Critical",
-            f"{critical_inventory:,}"
-        )
-
-
-        risk2.metric(
-            "High Risk",
-            f"{high_risk_inventory:,}"
-        )
-
-
-        risk3.metric(
-            "Medium Risk",
-            f"{medium_risk_inventory:,}"
-        )
-
-
-        risk4.metric(
-            "Low Risk",
-            f"{low_risk_inventory:,}"
-        )
-
-
-        risk_data = (
-
-            risk_counts
-            .reset_index()
-        )
-
-
-        risk_data.columns = [
-            "risk_level",
-            "product_count"
-        ]
-
-
-        fig_risk = px.bar(
-
-            risk_data,
-
-            x="risk_level",
-
-            y="product_count",
-
-            title="Inventory Risk Distribution",
-
-            text="product_count"
-        )
-
-
-        fig_risk.update_traces(
-
-            textposition="outside",
-
-            hovertemplate=
-            "<b>%{x}</b>"
-            "<br>Products: %{y:,}"
-            "<extra></extra>"
-        )
-
-
-        fig_risk.update_layout(
-
-            xaxis_title="Risk Level",
-
-            yaxis_title="Number of Products"
-        )
-
-
-        style_chart(
-            fig_risk
-        )
-
-
-        st.plotly_chart(
-
-            fig_risk,
-
-            use_container_width=True,
-
-            key="risk_chart"
-        )
-
-
-    else:
-
-        st.info(
-            "final_risk_level column is not available "
-            "in inventory_risk_scoring.csv."
-        )
-
-
-else:
-
-    st.info(
-        "Inventory risk dataset is not available yet."
-    )
-
-
-# ============================================================
-# TOP PRODUCTS
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    """
-    <div class="section-header">
-        Top Products
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-if (
-    "sku_id" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
-):
-
-    top_products = (
-
-        filtered_sales
-        .groupby("sku_id")["total_value"]
-        .sum()
-        .sort_values(
-            ascending=False
-        )
-        .head(10)
-        .reset_index()
-    )
-
-
-    fig_products = px.bar(
-
-        top_products,
-
-        x="total_value",
-
-        y="sku_id",
-
-        orientation="h",
-
-        title="Top 10 Products by Sales",
-
-        text="total_value"
-    )
-
-
-    fig_products.update_traces(
-
-        texttemplate="₹%{x:,.0f}",
-
-        textposition="outside",
-
-        hovertemplate=
-        "<b>Product %{y}</b>"
-        "<br>Sales: ₹%{x:,.0f}"
-        "<extra></extra>"
-    )
-
-
-    fig_products.update_layout(
-
-        xaxis_title="Sales (₹)",
-
-        yaxis_title="Product",
-
-        yaxis={
-            "categoryorder": "total ascending"
-        }
-    )
-
-
-    style_chart(
-        fig_products
-    )
-
-
-    st.plotly_chart(
-
-        fig_products,
-
-        use_container_width=True,
-
-        key="products_chart"
-    )
-
-
-# ============================================================
-# CATEGORY PERFORMANCE TABLE
-# ============================================================
 
 if (
     "category" in filtered_sales.columns
     and "total_value" in filtered_sales.columns
 ):
-
-    st.divider()
-
-
-    st.markdown(
-        """
-        <div class="section-header">
-            Category Performance
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-    category_summary = (
-
-        filtered_sales
-        .groupby("category")
-        .agg(
-            Sales=("total_value", "sum"),
-            Transactions=(
-                "receipt_id",
-                "nunique"
-            )
-            if "receipt_id" in filtered_sales.columns
-            else (
-                "total_value",
-                "count"
-            ),
-            Quantity=(
-                "quantity",
-                "sum"
-            )
-            if "quantity" in filtered_sales.columns
-            else (
-                "total_value",
-                "count"
-            )
-        )
-        .reset_index()
-        .sort_values(
-            "Sales",
-            ascending=False
-        )
-    )
-
-
-    category_summary["Sales"] = (
-        category_summary["Sales"]
-        .round(0)
-    )
-
-
-    st.dataframe(
-
-        category_summary,
-
-        use_container_width=True,
-
-        hide_index=True,
-
-        column_config={
-
-            "category": st.column_config.TextColumn(
-                "Category"
-            ),
-
-            "Sales": st.column_config.NumberColumn(
-                "Sales",
-                format="₹%d"
-            ),
-
-            "Transactions": st.column_config.NumberColumn(
-                "Transactions",
-                format="%d"
-            ),
-
-            "Quantity": st.column_config.NumberColumn(
-                "Quantity",
-                format="%d"
-            )
-        }
-    )
-
-# ============================================================
-# CATEGORY PERFORMANCE CHARTS
-# ============================================================
-
-if (
-    "category" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
-):
-
-    st.divider()
-
-    st.markdown(
-        """
-        <div class="section-header">
-            Category Analytics
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # ========================================================
-    # CATEGORY SALES SUMMARY
-    # ========================================================
 
     category_chart_data = (
+
         filtered_sales
+
         .groupby("category")
+
         .agg(
-            Sales=("total_value", "sum"),
-            Quantity=(
-                "quantity",
-                "sum"
-            )
-            if "quantity" in filtered_sales.columns
-            else (
-                "total_value",
-                "count"
-            )
+            Sales=("total_value", "sum")
         )
+
         .reset_index()
+
         .sort_values(
             "Sales",
             ascending=False
         )
     )
 
-    # ========================================================
-    # CATEGORY SALES + DISTRIBUTION
-    # ========================================================
 
     category_left, category_right = st.columns(
         [2, 1]
     )
+
 
     # ========================================================
     # CATEGORY SALES BAR CHART
@@ -2215,6 +1461,7 @@ if (
             text="Sales"
         )
 
+
         fig_category_sales.update_traces(
 
             texttemplate="₹%{y:,.0f}",
@@ -2226,6 +1473,7 @@ if (
             "<br>Sales: ₹%{y:,.0f}"
             "<extra></extra>"
         )
+
 
         fig_category_sales.update_layout(
 
@@ -2240,10 +1488,12 @@ if (
             uniformtext_mode="hide"
         )
 
+
         style_chart(
             fig_category_sales,
             height=430
         )
+
 
         st.plotly_chart(
 
@@ -2251,11 +1501,12 @@ if (
 
             use_container_width=True,
 
-            key="category_sales_chart"
+            key="home_category_sales_chart"
         )
 
+
     # ========================================================
-    # CATEGORY SALES DONUT
+    # CATEGORY DISTRIBUTION
     # ========================================================
 
     with category_right:
@@ -2273,6 +1524,7 @@ if (
             title="Category Sales Distribution"
         )
 
+
         fig_category_pie.update_traces(
 
             textposition="inside",
@@ -2286,10 +1538,12 @@ if (
             "<extra></extra>"
         )
 
+
         style_chart(
             fig_category_pie,
             height=430
         )
+
 
         st.plotly_chart(
 
@@ -2297,72 +1551,16 @@ if (
 
             use_container_width=True,
 
-            key="category_distribution_chart"
+            key="home_category_distribution_chart"
         )
 
-    # ========================================================
-    # CATEGORY QUANTITY CHART
-    # ========================================================
 
-    st.markdown(
-        "**Quantity Sold by Category**"
+else:
+
+    st.info(
+        "Category information is not available."
     )
 
-    category_quantity = (
-        category_chart_data
-        .sort_values(
-            "Quantity",
-            ascending=False
-        )
-    )
-
-    fig_category_quantity = px.bar(
-
-        category_quantity,
-
-        x="category",
-
-        y="Quantity",
-
-        title="Quantity Sold by Category",
-
-        text="Quantity"
-    )
-
-    fig_category_quantity.update_traces(
-
-        texttemplate="%{y:,.0f}",
-
-        textposition="outside",
-
-        hovertemplate=
-        "<b>%{x}</b>"
-        "<br>Quantity Sold: %{y:,.0f}"
-        "<extra></extra>"
-    )
-
-    fig_category_quantity.update_layout(
-
-        xaxis_title="Category",
-
-        yaxis_title="Quantity Sold",
-
-        xaxis_tickangle=-30
-    )
-
-    style_chart(
-        fig_category_quantity,
-        height=430
-    )
-
-    st.plotly_chart(
-
-        fig_category_quantity,
-
-        use_container_width=True,
-
-        key="category_quantity_chart"
-    )
 
 # ============================================================
 # PROJECT OVERVIEW
@@ -2384,13 +1582,12 @@ st.markdown(
 st.write(
     """
     This Retail Executive Dashboard provides a professional
-    overview of retail sales performance, customer transactions,
-    demand trends, demand forecasting and inventory risk.
+    overview of retail sales performance, demand forecasting
+    and inventory intelligence.
 
-    The dashboard helps management understand sales patterns,
-    channel performance, store performance, product performance
-    and inventory risk so that better business decisions can
-    be made.
+    Use the navigation menu to explore detailed sales analytics,
+    demand forecasting, inventory performance, risk analysis,
+    product details and executive-level insights.
     """
 )
 
