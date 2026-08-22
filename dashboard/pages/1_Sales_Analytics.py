@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -11,56 +10,91 @@ import plotly.express as px
 st.set_page_config(
     page_title="Sales Analytics",
     page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 
 # ============================================================
-# PROJECT PATH
+# PROFESSIONAL STYLE
 # ============================================================
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.abspath(__file__)
-    )
-)
+st.markdown(
+    """
+    <style>
 
-DATA_PATH = os.path.join(
-    BASE_DIR,
-    "data",
-    "processed",
-    "sales_transactions_cleaned.csv"
+    .stApp {
+        background-color: #F6F8FB;
+    }
+
+    .main .block-container {
+        max-width: 1500px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    div[data-testid="stMetric"] {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 3px 10px rgba(15,39,71,0.05);
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #FFFFFF;
+        border-right: 1px solid #E2E8F0;
+    }
+
+    .section-title {
+        font-size: 21px;
+        font-weight: 700;
+        color: #17324D;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
 
 # ============================================================
-# LOAD SALES DATA
+# SALES DATA PATH
+# ============================================================
+
+DATA_PATH = (
+    r"C:\Users\Pawan\OneDrive\Desktop\Online-Retail-II"
+    r"\Online-retail-demand-forcasting\data\processed"
+    r"\sales_transactions_cleaned.csv"
+)
+
+
+# ============================================================
+# LOAD DATA
 # ============================================================
 
 @st.cache_data
 def load_sales_data():
 
-    if not os.path.exists(DATA_PATH):
-        return None
-
     return pd.read_csv(DATA_PATH)
 
 
-sales_df = load_sales_data()
+try:
 
+    sales_df = load_sales_data()
 
-# ============================================================
-# DATA VALIDATION
-# ============================================================
+except Exception as e:
 
-if sales_df is None:
+    st.error("Unable to load the sales dataset.")
 
-    st.error("Sales dataset could not be found.")
+    st.write("Expected location:")
 
-    st.info(
-        f"Expected location: {DATA_PATH}"
-    )
+    st.code(DATA_PATH)
+
+    st.write("Error:")
+
+    st.code(str(e))
 
     st.stop()
 
@@ -99,54 +133,37 @@ if "date" in sales_df.columns:
 
 
 # ============================================================
-# PAGE HEADER
+# HEADER
 # ============================================================
 
 st.title("📊 Sales Analytics")
 
 st.caption(
-    "Analyze retail sales performance, transactions, "
-    "channels, stores and yearly trends."
+    "Analyze retail sales performance, transactions, channels and stores."
 )
+unsafe_allow_html=True
 
-st.divider()
 
 
 # ============================================================
-# SIDEBAR FILTERS
+# SIDEBAR
 # ============================================================
 
 st.sidebar.title("Sales Filters")
 
-
-# ============================================================
-# YEAR FILTER
-# ============================================================
-
-if "year" in sales_df.columns:
-
-    years = sorted(
-        sales_df["year"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
-else:
-
-    years = []
-
+years = sorted(
+    sales_df["year"]
+    .dropna()
+    .unique()
+    .tolist()
+)
 
 selected_years = st.sidebar.multiselect(
     "Select Year",
-    options=years,
+    years,
     default=years
 )
 
-
-# ============================================================
-# CHANNEL FILTER
-# ============================================================
 
 if "channel" in sales_df.columns:
 
@@ -165,24 +182,13 @@ else:
 
 selected_channels = st.sidebar.multiselect(
     "Select Channel",
-    options=channels,
+    channels,
     default=channels
 )
 
 
-st.sidebar.divider()
-
-st.sidebar.caption(
-    f"Years selected: {len(selected_years)}"
-)
-
-st.sidebar.caption(
-    f"Channels selected: {len(selected_channels)}"
-)
-
-
 # ============================================================
-# APPLY FILTERS
+# FILTER DATA
 # ============================================================
 
 filtered_sales = sales_df.copy()
@@ -195,21 +201,12 @@ if selected_years:
     ]
 
 
-if (
-    selected_channels
-    and "channel" in filtered_sales.columns
-):
+if selected_channels and "channel" in filtered_sales.columns:
 
     filtered_sales = filtered_sales[
-        filtered_sales["channel"].isin(
-            selected_channels
-        )
+        filtered_sales["channel"].isin(selected_channels)
     ]
 
-
-# ============================================================
-# EMPTY DATA CHECK
-# ============================================================
 
 if filtered_sales.empty:
 
@@ -217,137 +214,106 @@ if filtered_sales.empty:
         "No sales records match the selected filters."
     )
 
-    st.info(
-        "Please select at least one year and one channel."
-    )
-
     st.stop()
-
-
-# ============================================================
-# SALES OVERVIEW
-# ============================================================
-
-st.header("Sales Overview")
 
 
 # ============================================================
 # KPI CALCULATIONS
 # ============================================================
 
-if "total_value" in filtered_sales.columns:
-
-    total_sales = (
-        filtered_sales["total_value"].sum()
-    )
-
-else:
-
-    total_sales = 0
+total_sales = (
+    filtered_sales["total_value"].sum()
+    if "total_value" in filtered_sales.columns
+    else 0
+)
 
 
 if "receipt_id" in filtered_sales.columns:
 
-    total_transactions = (
-        filtered_sales["receipt_id"].nunique()
-    )
+    transactions = filtered_sales["receipt_id"].nunique()
 
 else:
 
-    total_transactions = len(
-        filtered_sales
-    )
+    transactions = len(filtered_sales)
 
 
-if "quantity" in filtered_sales.columns:
-
-    total_quantity = (
-        filtered_sales["quantity"].sum()
-    )
-
-else:
-
-    total_quantity = 0
+total_quantity = (
+    filtered_sales["quantity"].sum()
+    if "quantity" in filtered_sales.columns
+    else 0
+)
 
 
-if "store_id" in filtered_sales.columns:
-
-    total_stores = (
-        filtered_sales["store_id"].nunique()
-    )
-
-else:
-
-    total_stores = 0
+stores = (
+    filtered_sales["store_id"].nunique()
+    if "store_id" in filtered_sales.columns
+    else 0
+)
 
 
-if "sku_id" in filtered_sales.columns:
-
-    total_products = (
-        filtered_sales["sku_id"].nunique()
-    )
-
-else:
-
-    total_products = 0
+products = (
+    filtered_sales["sku_id"].nunique()
+    if "sku_id" in filtered_sales.columns
+    else 0
+)
 
 
 average_order_value = (
-
-    total_sales
-    /
-    total_transactions
-
-    if total_transactions > 0
-
+    total_sales / transactions
+    if transactions > 0
     else 0
 )
 
 
 # ============================================================
-# KPI CARDS
+# SALES OVERVIEW
 # ============================================================
 
-kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+st.markdown(
+    '<div class="section-title">Sales Overview</div>',
+    unsafe_allow_html=True
+)
 
 
-kpi1.metric(
+k1, k2, k3, k4, k5 = st.columns(5)
+
+
+k1.metric(
     "Total Sales",
     f"₹{total_sales:,.0f}"
 )
 
-
-kpi2.metric(
+k2.metric(
     "Transactions",
-    f"{total_transactions:,}"
+    f"{transactions:,}"
 )
 
-
-kpi3.metric(
+k3.metric(
     "Quantity Sold",
     f"{total_quantity:,.0f}"
 )
 
-
-kpi4.metric(
+k4.metric(
     "Stores",
-    f"{total_stores:,}"
+    f"{stores:,}"
 )
 
-
-kpi5.metric(
+k5.metric(
     "Average Order Value",
     f"₹{average_order_value:,.0f}"
 )
 
 
 # ============================================================
-# DAILY SALES TREND
+# SALES TREND
 # ============================================================
 
 st.divider()
 
-st.header("Sales Trend")
+st.markdown(
+    '<div class="section-title">Sales Trend</div>',
+    unsafe_allow_html=True
+)
 
 
 if (
@@ -391,12 +357,6 @@ if (
         use_container_width=True
     )
 
-else:
-
-    st.info(
-        "Date or total_value column is not available."
-    )
-
 
 # ============================================================
 # CHANNEL ANALYSIS
@@ -404,17 +364,15 @@ else:
 
 st.divider()
 
-st.header("Channel Analysis")
+left, right = st.columns(2)
 
 
-channel_left, channel_right = st.columns(2)
+with left:
 
-
-# ============================================================
-# SALES BY CHANNEL
-# ============================================================
-
-with channel_left:
+    st.markdown(
+        '<div class="section-title">Sales by Channel</div>',
+        unsafe_allow_html=True
+    )
 
     if (
         "channel" in filtered_sales.columns
@@ -426,10 +384,6 @@ with channel_left:
             .groupby("channel")["total_value"]
             .sum()
             .reset_index()
-            .sort_values(
-                "total_value",
-                ascending=False
-            )
         )
 
         fig_channel = px.bar(
@@ -442,18 +396,14 @@ with channel_left:
 
         fig_channel.update_traces(
             texttemplate="₹%{y:,.0f}",
-            textposition="outside",
-            hovertemplate=
-            "<b>%{x}</b>"
-            "<br>Sales: ₹%{y:,.0f}"
-            "<extra></extra>"
+            textposition="outside"
         )
 
         fig_channel.update_layout(
             template="plotly_white",
             xaxis_title="Channel",
             yaxis_title="Sales (₹)",
-            height=430
+            height=420
         )
 
         st.plotly_chart(
@@ -461,30 +411,18 @@ with channel_left:
             use_container_width=True
         )
 
-    else:
 
-        st.info(
-            "Channel data is not available."
-        )
+with right:
 
-
-# ============================================================
-# CHANNEL DISTRIBUTION
-# ============================================================
-
-with channel_right:
+    st.markdown(
+        '<div class="section-title">Channel Distribution</div>',
+        unsafe_allow_html=True
+    )
 
     if (
         "channel" in filtered_sales.columns
         and "total_value" in filtered_sales.columns
     ):
-
-        channel_sales = (
-            filtered_sales
-            .groupby("channel")["total_value"]
-            .sum()
-            .reset_index()
-        )
 
         fig_channel_pie = px.pie(
             channel_sales,
@@ -496,28 +434,17 @@ with channel_right:
 
         fig_channel_pie.update_traces(
             textposition="inside",
-            textinfo="percent",
-            hovertemplate=
-            "<b>%{label}</b>"
-            "<br>Sales: ₹%{value:,.0f}"
-            "<br>Share: %{percent}"
-            "<extra></extra>"
+            textinfo="percent"
         )
 
         fig_channel_pie.update_layout(
             template="plotly_white",
-            height=430
+            height=420
         )
 
         st.plotly_chart(
             fig_channel_pie,
             use_container_width=True
-        )
-
-    else:
-
-        st.info(
-            "Channel data is not available."
         )
 
 
@@ -527,7 +454,10 @@ with channel_right:
 
 st.divider()
 
-st.header("Store Performance")
+st.markdown(
+    '<div class="section-title">Store Performance</div>',
+    unsafe_allow_html=True
+)
 
 
 if (
@@ -539,9 +469,7 @@ if (
         filtered_sales
         .groupby("store_id")["total_value"]
         .sum()
-        .sort_values(
-            ascending=False
-        )
+        .sort_values(ascending=False)
         .head(15)
         .reset_index()
     )
@@ -556,11 +484,7 @@ if (
 
     fig_store.update_traces(
         texttemplate="₹%{y:,.0f}",
-        textposition="outside",
-        hovertemplate=
-        "<b>Store %{x}</b>"
-        "<br>Sales: ₹%{y:,.0f}"
-        "<extra></extra>"
+        textposition="outside"
     )
 
     fig_store.update_layout(
@@ -575,12 +499,6 @@ if (
         use_container_width=True
     )
 
-else:
-
-    st.info(
-        "Store or sales data is not available."
-    )
-
 
 # ============================================================
 # YEAR-WISE SALES
@@ -588,164 +506,48 @@ else:
 
 st.divider()
 
-st.header("Year-wise Sales")
+st.markdown(
+    '<div class="section-title">Year-wise Sales</div>',
+    unsafe_allow_html=True
+)
 
 
-if (
-    "year" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
-):
-
-    yearly_sales = (
-        filtered_sales
-        .groupby("year")["total_value"]
-        .sum()
-        .reset_index()
-        .sort_values("year")
-    )
-
-    fig_year = px.bar(
-        yearly_sales,
-        x="year",
-        y="total_value",
-        title="Sales by Year",
-        text="total_value"
-    )
-
-    fig_year.update_traces(
-        texttemplate="₹%{y:,.0f}",
-        textposition="outside",
-        hovertemplate=
-        "<b>%{x}</b>"
-        "<br>Sales: ₹%{y:,.0f}"
-        "<extra></extra>"
-    )
-
-    fig_year.update_layout(
-        template="plotly_white",
-        xaxis_title="Year",
-        yaxis_title="Sales (₹)",
-        height=430
-    )
-
-    st.plotly_chart(
-        fig_year,
-        use_container_width=True
-    )
-
-else:
-
-    st.info(
-        "Year or sales data is not available."
-    )
+yearly_sales = (
+    filtered_sales
+    .groupby("year")["total_value"]
+    .sum()
+    .reset_index()
+    .sort_values("year")
+)
 
 
-# ============================================================
-# TOP PRODUCTS
-# ============================================================
-
-st.divider()
-
-st.header("Top Products")
-
-
-if (
-    "sku_id" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
-):
-
-    top_products = (
-        filtered_sales
-        .groupby("sku_id")["total_value"]
-        .sum()
-        .sort_values(
-            ascending=False
-        )
-        .head(10)
-        .reset_index()
-    )
-
-    fig_products = px.bar(
-        top_products,
-        x="total_value",
-        y="sku_id",
-        orientation="h",
-        title="Top 10 Products by Sales",
-        text="total_value"
-    )
-
-    fig_products.update_traces(
-        texttemplate="₹%{x:,.0f}",
-        textposition="outside",
-        hovertemplate=
-        "<b>Product %{y}</b>"
-        "<br>Sales: ₹%{x:,.0f}"
-        "<extra></extra>"
-    )
-
-    fig_products.update_layout(
-        template="plotly_white",
-        xaxis_title="Sales (₹)",
-        yaxis_title="Product",
-        yaxis={
-            "categoryorder": "total ascending"
-        },
-        height=450
-    )
-
-    st.plotly_chart(
-        fig_products,
-        use_container_width=True
-    )
-
-else:
-
-    st.info(
-        "Product or sales data is not available."
-    )
+fig_year = px.bar(
+    yearly_sales,
+    x="year",
+    y="total_value",
+    title="Sales by Year",
+    text="total_value"
+)
 
 
-# ============================================================
-# SALES DATA TABLE
-# ============================================================
-
-st.divider()
-
-st.header("Sales Data")
+fig_year.update_traces(
+    texttemplate="₹%{y:,.0f}",
+    textposition="outside"
+)
 
 
-display_columns = [
-    column
-    for column in [
-        "date",
-        "receipt_id",
-        "store_id",
-        "sku_id",
-        "customer_id",
-        "quantity",
-        "unit_price",
-        "total_value",
-        "channel",
-        "discount_pct",
-        "promo_id"
-    ]
-    if column in filtered_sales.columns
-]
+fig_year.update_layout(
+    template="plotly_white",
+    xaxis_title="Year",
+    yaxis_title="Sales (₹)",
+    height=430
+)
 
 
-if display_columns:
-
-    st.dataframe(
-        filtered_sales[display_columns].head(100),
-        use_container_width=True,
-        hide_index=True
-    )
-
-else:
-
-    st.info(
-        "Sales columns are not available."
-    )
+st.plotly_chart(
+    fig_year,
+    use_container_width=True
+)
 
 
 # ============================================================
