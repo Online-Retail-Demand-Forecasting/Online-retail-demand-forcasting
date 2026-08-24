@@ -14,7 +14,7 @@ st.set_page_config(
 
 
 # ============================================================
-# PAGE NAVIGATION
+# PAGE NAVIGATION (linking part)
 # ============================================================
 
 home_page = st.Page(
