@@ -512,7 +512,7 @@ The project demonstrates an end-to-end workflow covering:
 
 ---
 
-## ⭐ Conclusion
+## ⭐ Conclusion-
 
 This project combines **data analytics, exploratory data analysis, machine learning, demand forecasting, inventory risk scoring, and interactive visualization** into an end-to-end retail intelligence solution.
 
