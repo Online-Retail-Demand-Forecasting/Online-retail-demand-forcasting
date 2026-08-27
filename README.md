@@ -4,7 +4,7 @@ An end-to-end retail analytics, demand forecasting, inventory risk analysis, and
 
 The project analyzes approximately 10 million retail transactions from 2022–2025 to identify sales patterns, understand demand behavior, forecast future demand, evaluate inventory risk, and provide management-oriented insights through an interactive Streamlit Executive Dashboard.
 
----
+--
 
 📌 Project Overview
 
