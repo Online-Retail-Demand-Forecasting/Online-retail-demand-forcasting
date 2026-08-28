@@ -1,509 +1,55 @@
 🛍️ Online Retail Demand Forecasting & Inventory Intelligence
 
-An end-to-end retail analytics, demand forecasting, inventory risk analysis, and business intelligence project built using Python, Machine Learning, Statistical Forecasting, and Streamlit.
+An end-to-end retail analytics, demand forecasting, and inventory intelligence project that analyzes historical retail transactions, identifies sales trends, forecasts future demand, evaluates inventory risk, and presents actionable business insights through an interactive Streamlit Executive Dashboard.
 
-The project analyzes approximately 10 million retail transactions from 2022–2025 to identify sales patterns, understand demand behavior, forecast future demand, evaluate inventory risk, and provide management-oriented insights through an interactive Streamlit Executive Dashboard.
-
---
+---
 
 📌 Project Overview
 
-Retail businesses need reliable demand insights to maintain the right inventory levels, reduce stockouts, avoid overstocking, and improve sales planning.
+Retail businesses need accurate demand insights to maintain the right inventory levels, reduce stockouts, avoid overstocking, and improve sales planning.
 
-This project provides an end-to-end retail intelligence workflow covering:
+This project transforms large-scale retail transaction data into meaningful business insights using:
 
-- Historical sales analysis
-- Exploratory Data Analysis (EDA)
-- Demand aggregation and feature engineering
-- Statistical time-series forecasting
-- Machine Learning forecasting
-- Forecast model evaluation
-- Inventory risk scoring
-- Product and category analysis
-- Store and channel analysis
-- Interactive business dashboards
-- Management-oriented insights
+- 📊 Exploratory Data Analysis
+- 🧹 Data Cleaning & Preprocessing
+- ⚙️ Feature Engineering
+- 📈 Sales & Revenue Analytics
+- 🤖 Machine Learning Forecasting
+- 📉 Time-Series Forecasting
+- 📦 Inventory Intelligence
+- ⚠️ Inventory Risk Scoring
+- 📋 Product-Level Analysis
+- 🎯 Interactive Streamlit Dashboards
 
-The solution combines:
-
-Data Analytics → Machine Learning → Time-Series Forecasting → Inventory Intelligence → Business Dashboard
+The final solution provides a centralized dashboard for monitoring sales performance, understanding demand patterns, forecasting future demand, and identifying inventory risks.
 
 ---
 
-🎯 Business Objectives
+🎯 Project Objectives
 
-The primary objectives of the project are to:
+The main objectives of this project are to:
 
-- Understand historical retail sales patterns
-- Analyze sales across stores and channels
-- Identify high-performing products
-- Analyze category-level performance
-- Understand daily demand behavior
-- Forecast future retail demand
-- Compare statistical and machine learning forecasting methods
-- Evaluate forecasting performance using standard metrics
-- Identify inventory items requiring attention
-- Analyze stock coverage and inventory risk
-- Support data-driven replenishment decisions
-- Present insights through an interactive dashboard
+1. Analyze historical retail transaction data.
+2. Identify sales and demand trends.
+3. Understand product, store, customer, and channel performance.
+4. Engineer meaningful time-series and demand-related features.
+5. Forecast future demand using multiple forecasting techniques.
+6. Compare forecasting model performance.
+7. Identify potential inventory risks.
+8. Provide actionable business insights.
+9. Present results through an interactive Streamlit dashboard.
+10. Create a deployment-ready retail analytics solution.
 
 ---
 
-📊 Dataset
-
-The project uses synthetic retail transaction and inventory data covering the period from 2022 to 2025.
-
-Dataset Overview
-
-Attribute| Value
-Time Period| 2022–2025
-Original Transactions| ~10 million
-Cleaned Transactions| ~9.96 million
-Stores| 30
-Products / SKUs| 5,000
-Customers| 10,000
-Channels| 3
-
-Sales Channels
-
-- In-Store
-- Online
-- Mobile App
-
----
-
-🧾 Main Transaction Columns
-
-Column| Description
-"date"| Transaction date
-"receipt_id"| Transaction / receipt identifier
-"store_id"| Store identifier
-"sku_id"| Product / SKU identifier
-"customer_id"| Customer identifier
-"quantity"| Quantity purchased
-"unit_price"| Unit price
-"total_value"| Total transaction value
-"channel"| Sales channel
-"discount_pct"| Discount percentage
-"promo_id"| Promotion identifier
-
----
-
-🔄 Project Workflow
-
-Raw Retail Data
-      ↓
-Data Cleaning
-      ↓
-Exploratory Data Analysis
-      ↓
-Demand Aggregation
-      ↓
-Feature Engineering
-      ↓
-Forecasting
-      ↓
-Model Evaluation
-      ↓
-Inventory Risk Scoring
-      ↓
-Streamlit Dashboard
-      ↓
-Business Insights
-
----
-
-🧹 Data Cleaning
-
-The raw transaction data was processed to improve data quality, consistency, and usability.
-
-Major Data Cleaning Steps
-
-- Duplicate removal
-- Missing-value checking
-- Data type conversion
-- Date standardization
-- Numerical column validation
-- Quantity validation
-- Price validation
-- Transaction consistency checks
-- Daily demand aggregation
-
-After duplicate removal, the cleaned transaction dataset contained approximately:
-
-9.96 million records
-
----
-
-🔎 Exploratory Data Analysis
-
-Exploratory Data Analysis was performed to understand historical sales and demand behavior.
-
-Key Analyses
-
-- Daily sales trends
-- Daily demand trends
-- Monthly sales patterns
-- Year-wise sales performance
-- Sales by channel
-- Store-level performance
-- Product-level performance
-- Customer-level sales
-- Transaction patterns
-- Demand behavior over time
-- Category performance
-
-The EDA stage helped identify temporal patterns and provided the foundation for the forecasting workflow.
-
----
-
-⚙️ Feature Engineering
-
-A dedicated demand dataset was created using daily aggregated demand and time-series features.
-
-Time-Based Features
-
-- "year"
-- "month"
-- "quarter"
-- "day_of_week"
-- "day"
-- "week_of_year"
-- "is_weekend"
-
-Lag Features
-
-- "lag_1"
-- "lag_7"
-- "lag_14"
-- "lag_30"
-
-Rolling Features
-
-- "rolling_7"
-- "rolling_14"
-- "rolling_30"
-
-Target Variable
-
-demand
-
-These features help forecasting models capture:
-
-- Recent demand behavior
-- Weekly patterns
-- Seasonal effects
-- Short-term demand changes
-- Longer-term demand trends
-
----
-
-🤖 Demand Forecasting
-
-Multiple forecasting approaches were evaluated to determine how effectively future demand could be predicted.
-
-The project uses both statistical time-series methods and machine learning models.
-
-Forecasting Methods
-
-Statistical Forecasting
-
-- Naive Baseline
-- Seasonal Naive Forecast
-- ARIMA
-- SARIMA
-
-Machine Learning
-
-- Random Forest
-- XGBoost
-- Improved Random Forest
-
----
-
-📅 Train/Test Split
-
-A chronological time-based split was used to avoid data leakage.
-
-Training Data: 1144 rows
-Testing Data: 287 rows
-
-Training Period:
-2022-01-31 → 2025-03-19
-
-Testing Period:
-2025-03-20 → 2025-12-31
-
-The chronological split ensures that future observations are not used to train the models.
-
----
-
-📏 Forecasting Evaluation Metrics
-
-The forecasting models were evaluated using:
-
-MAE — Mean Absolute Error
-
-Measures the average absolute difference between actual and predicted demand.
-
-Lower values indicate better performance.
-
-RMSE — Root Mean Squared Error
-
-Penalizes larger prediction errors more heavily than MAE.
-
-Lower values indicate better performance.
-
-MAPE — Mean Absolute Percentage Error
-
-Measures prediction error as a percentage of actual demand.
-
-Lower values indicate better performance.
-
----
-
-📈 Forecasting Model Evaluation
-
-The evaluated models produced the following results:
-
-Model| MAE| RMSE| MAPE
-Naive Baseline| 366.53| 486.85| 2.56%
-Random Forest| 414.75| 524.62| 2.86%
-XGBoost| 417.45| 521.34| 2.87%
-Improved Random Forest| 429.45| 540.88| 2.95%
-Seasonal Naive (7-day)| 488.05| 733.76| 3.34%
-
----
-
-📌 Forecasting Insights
-
-The model evaluation produced several important observations:
-
-- The Naive Baseline achieved the lowest MAE and MAPE in this experiment.
-- The baseline therefore outperformed the tested machine learning models for these evaluation metrics.
-- Random Forest achieved lower MAE and MAPE than XGBoost.
-- XGBoost achieved the lowest RMSE among the machine learning models.
-- The Improved Random Forest feature set did not improve performance over the original Random Forest.
-- The 7-day Seasonal Naive approach performed worse than the other evaluated approaches.
-- ARIMA and SARIMA were also incorporated as statistical time-series forecasting approaches.
-
-Key Takeaway
-
-The results demonstrate why forecasting systems should be compared against simple baseline methods rather than assuming that a more complex machine learning model will always perform better.
-
----
-
-📦 Inventory Risk Scoring
-
-An inventory risk scoring component was developed to identify products that may require inventory attention.
-
-The analysis considers inventory-related indicators such as:
-
-- Stock on hand
-- Reorder point
-- Safety stock
-- Average daily demand
-- Stock coverage days
-- Risk score
-- Risk category
-
----
-
-🚦 Inventory Risk Categories
-
-Inventory items are classified into four risk levels:
-
-Risk Level| Meaning
-🔴 Critical| Immediate inventory attention required
-🟠 High Risk| High probability of inventory shortage
-🟡 Medium Risk| Requires monitoring
-🟢 Low Risk| Relatively healthy inventory position
-
----
-
-📊 Inventory Risk Distribution
-
-The final inventory risk dataset contains 21,228 inventory records.
-
-Risk Level| Count
-🟢 Low Risk| 18,375
-🔴 Critical| 2,815
-🟡 Medium Risk| 30
-🟠 High Risk| 8
-Total| 21,228
-
-The risk analysis helps identify inventory items that may require:
-
-- Immediate replenishment
-- Inventory monitoring
-- Demand review
-- Stock optimization
-- Reorder planning
-
----
-
-📁 Processed Datasets
-
-The major processed datasets generated during the project are:
-
-"sales_transactions_cleaned.csv"
-
-Contains cleaned transaction-level retail data used for sales analysis and dashboard visualizations.
-
-"daily_demand_features.csv"
-
-Contains daily aggregated demand along with time-based, lag, and rolling features used for forecasting.
-
-"demand_forecast_results.csv"
-
-Contains actual and predicted demand values generated during the forecasting process.
-
-"inventory_risk_scoring.csv"
-
-Contains inventory-level information including stock, demand estimates, coverage metrics, risk scores, and final risk categories.
-
----
-
-📊 Executive Dashboard
-
-The project includes an interactive Streamlit Executive Dashboard designed to convert analytical results into management-friendly business insights.
-
-The dashboard brings together:
-
-- Sales Analytics
-- Demand Analysis
-- Forecasting
-- Product Analysis
-- Inventory Intelligence
-- Risk Analysis
-- Key Performance Indicators
-
----
-
-🏠 Dashboard Sections
-
-📌 Executive Summary
-
-Provides a high-level overview of retail performance through KPIs such as:
-
-- Total Sales
-- Total Transactions
-- Quantity Sold
-- Number of Stores
-- Number of Products
-- Average Order Value
-
----
-
-💰 Sales Analytics
-
-Provides insights into:
-
-- Daily Sales Trend
-- Sales by Channel
-- Store-wise Sales
-- Year-wise Sales
-- Product performance
-- Sales patterns
-
----
-
-📈 Demand & Forecasting
-
-Provides:
-
-- Daily Demand Trend
-- Actual vs Predicted Demand
-- Forecast results
-- Forecast performance
-- Demand patterns over time
-- Model comparison
-
----
-
-🛍️ Product Analysis
-
-Provides:
-
-- Top Products by Sales
-- Product-level performance
-- Category performance
-- Sales by Category
-- Quantity Sold by Category
-
----
-
-📦 Inventory Intelligence
-
-Provides:
-
-- Critical inventory
-- High-risk inventory
-- Medium-risk inventory
-- Low-risk inventory
-- Inventory risk distribution
-- Stock coverage analysis
-- Store-level risk analysis
-
----
-
-🎛️ Dashboard Filters
-
-Interactive filters allow users to explore the data dynamically.
-
-Depending on the dashboard section, filters include:
-
-- Year
-- Sales Channel
-- Store
-- Product / SKU
-- Risk Level
-
-Charts, tables, and KPIs update based on the selected filters where applicable.
-
----
-
-🖥️ Technology Stack
-
-Programming & Data Analysis
-
-- Python
-- Pandas
-- NumPy
-
-Machine Learning
-
-- Scikit-learn
-- Random Forest
-- XGBoost
-
-Statistical Forecasting
-
-- ARIMA
-- SARIMA
-- Naive Forecasting
-- Seasonal Naive Forecasting
-
-Visualization & Dashboard
-
-- Plotly
-- Streamlit
-
-Development Tools
-
-- Jupyter Notebook
-- VS Code
-- Git
-- GitHub
-
----
-
-📁 Project Structure
+🗂️ Project Structure
 
 Online-retail-demand-forecasting/
 │
 ├── data/
 │   ├── raw/
+│   │   └── Original datasets
+│   │
 │   └── processed/
 │       ├── sales_transactions_cleaned.csv
 │       ├── daily_demand_features.csv
@@ -514,8 +60,7 @@ Online-retail-demand-forecasting/
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_data_cleaning.ipynb
 │   ├── 03_eda.ipynb
-│   ├── 04_demand_forecasting.ipynb
-│   └── 05_risk_scoring.ipynb
+│   └── 04_demand_forecasting.ipynb
 │
 ├── src/
 │   ├── data_cleaning.py
@@ -525,181 +70,556 @@ Online-retail-demand-forecasting/
 ├── dashboard/
 │   └── app.py
 │
+├── .gitattributes
+├── .gitignore
 ├── README.md
 └── requirements.txt
 
-«Note: Update the project structure above if your final GitHub repository contains additional files or folders.»
+---
+
+📊 Dataset
+
+The project uses large-scale retail transaction data covering 2022–2025.
+
+Dataset Statistics
+
+Attribute| Value
+Original Transactions| 9,972,038
+Transactions after Duplicate Removal| 9,959,019
+Date Range| 2022–2025
+Stores| 30
+Products / SKUs| 5,000
+Customers| 10,000
+Receipts| 5,174,631
+Sales Channels| 3
+
+Sales Channels
+
+- 🏪 In-Store
+- 🌐 Online
+- 📱 Mobile App
+
+Main Dataset Columns
+
+date
+receipt_id
+store_id
+sku_id
+customer_id
+quantity
+unit_price
+total_value
+channel
+discount_pct
+promo_id
 
 ---
 
-🚀 How to Run the Project
+🧹 Data Cleaning
 
-1. Clone the Repository
+The raw transaction data was processed to improve data quality and reliability.
 
-git clone <your-github-repository-url>
+Cleaning steps included:
 
-2. Navigate to the Project Directory
+- Duplicate detection and removal
+- Missing-value analysis
+- Data-type validation
+- Numerical conversion
+- Date conversion
+- Validation of quantity and price values
+- Preparation of clean transaction data
 
-cd Online-retail-demand-forecasting
+The cleaned dataset is stored in:
 
-3. Install Dependencies
-
-pip install -r requirements.txt
-
-4. Run the Streamlit Dashboard
-
-python -m streamlit run dashboard/app.py
-
-The dashboard will open in your default web browser.
+data/processed/sales_transactions_cleaned.csv
 
 ---
 
-📸 Dashboard Preview
+📈 Exploratory Data Analysis
 
-Screenshots of the completed dashboard can be added here to provide a visual overview of the project.
+The EDA phase analyzes the major sales and demand patterns in the dataset.
 
-Executive Dashboard
+Key analysis areas
 
-![Executive Dashboard](docs/images/executive-dashboard.png)
+- Daily sales trends
+- Monthly sales trends
+- Yearly sales performance
+- Product performance
+- Store performance
+- Customer activity
+- Channel performance
+- Revenue distribution
+- Demand patterns
+- Seasonal behavior
 
-Sales Analytics
+These analyses help identify business trends and provide the foundation for forecasting and inventory decisions.
 
-![Sales Analytics](docs/images/sales-analytics.png)
+---
 
-Demand Forecasting
+⚙️ Feature Engineering
 
-![Demand Forecasting](docs/images/demand-forecasting.png)
+Time-series and demand-related features were created to improve forecasting performance.
 
-Inventory Risk Dashboard
+Features Used
 
-![Inventory Risk](docs/images/inventory-risk.png)
+year
+month
+quarter
+day_of_week
+day
+week_of_year
+is_weekend
+lag_1
+lag_7
+lag_14
+lag_30
+rolling_7
+rolling_14
+rolling_30
 
-«Replace the image paths with the actual screenshot locations in your repository.»
+Lag Features
+
+Lag features capture previous demand values.
+
+Examples:
+
+- "lag_1" → Previous day's demand
+- "lag_7" → Demand from the previous week
+- "lag_14" → Demand from 14 days earlier
+- "lag_30" → Demand from 30 days earlier
+
+Rolling Features
+
+Rolling statistics help capture recent demand behavior.
+
+rolling_7
+rolling_14
+rolling_30
+
+These represent rolling demand patterns over 7, 14, and 30-day windows.
+
+---
+
+🤖 Demand Forecasting
+
+Multiple forecasting approaches were explored to predict future retail demand.
+
+1. Random Forest
+
+Random Forest was used as a machine-learning forecasting model using engineered time-series features.
+
+Performance
+
+Metric| Score
+MAE| 414.75
+RMSE| 524.62
+MAPE| 2.86%
+
+---
+
+2. XGBoost
+
+XGBoost was also evaluated for demand prediction.
+
+Performance
+
+Metric| Score
+MAE| 417.45
+RMSE| 521.34
+MAPE| 2.87%
+
+XGBoost provides strong predictive performance and captures nonlinear relationships between demand and engineered features.
+
+---
+
+📉 Time-Series Forecasting
+
+Traditional time-series forecasting techniques were also implemented to analyze temporal demand patterns.
+
+ARIMA
+
+ARIMA (AutoRegressive Integrated Moving Average) was used for univariate time-series demand forecasting.
+
+It models demand based on:
+
+- Previous observations
+- Differences in the series
+- Previous forecast errors
+
+ARIMA is useful for understanding demand trends and temporal dependencies.
+
+---
+
+SARIMA
+
+SARIMA (Seasonal ARIMA) extends ARIMA by incorporating seasonal patterns.
+
+SARIMA is particularly useful for retail demand because sales can exhibit recurring patterns across:
+
+- Weeks
+- Months
+- Seasons
+- Other periodic intervals
+
+Both ARIMA and SARIMA were implemented and evaluated as part of the forecasting analysis.
+
+---
+
+🔬 Forecasting Model Comparison
+
+Different forecasting approaches were explored to understand their strengths and suitability for retail demand prediction.
+
+Model| Type| Purpose
+Random Forest| Machine Learning| Demand prediction
+XGBoost| Machine Learning| Demand prediction
+ARIMA| Time Series| Temporal forecasting
+SARIMA| Time Series| Seasonal forecasting
+
+The project combines machine-learning and statistical forecasting techniques to provide a broader view of future demand.
+
+---
+
+📦 Inventory Intelligence
+
+Forecasting demand alone is not sufficient for retail decision-making.
+
+The project therefore incorporates inventory intelligence to identify products that may require attention.
+
+Inventory analysis focuses on:
+
+- Demand levels
+- Stock availability
+- Potential stockout risk
+- Overstock risk
+- Product-level demand
+- Inventory risk scoring
+
+---
+
+⚠️ Inventory Risk Analysis
+
+An inventory risk scoring approach is used to classify products according to their potential inventory risk.
+
+The analysis helps identify:
+
+🔴 High Risk
+
+Products that may require immediate inventory attention.
+
+🟡 Medium Risk
+
+Products that should be monitored regularly.
+
+🟢 Low Risk
+
+Products with relatively lower inventory concerns.
+
+This allows businesses to prioritize inventory management activities.
+
+---
+
+📊 Streamlit Executive Dashboard
+
+The project includes an interactive Streamlit dashboard that brings together the major analytical components.
+
+Dashboard Sections
+
+🏠 Home Dashboard
+
+Provides a high-level overview of the retail business.
+
+Includes:
+
+- Key performance indicators
+- Sales overview
+- Demand overview
+- Business highlights
+
+---
+
+📈 Sales Analytics
+
+Provides detailed sales analysis through:
+
+- Sales trends
+- Revenue analysis
+- Channel analysis
+- Product performance
+- Store performance
+- Time-based analysis
+
+---
+
+🔮 Demand Forecast
+
+Displays future demand predictions generated using forecasting models.
+
+Users can explore:
+
+- Historical demand
+- Forecasted demand
+- Forecast trends
+- Model results
+- Forecast performance
+
+---
+
+📦 Inventory Dashboard
+
+Provides an overview of inventory-related metrics and demand patterns.
+
+---
+
+⚠️ Risk Dashboard
+
+Highlights inventory risk categories and helps identify products that require attention.
+
+---
+
+🛍️ Product Details
+
+Provides product-level insights including demand and sales-related information.
+
+---
+
+📋 Executive Summary
+
+Provides a concise business-level overview of important findings and KPIs.
+
+---
+
+🛠️ Technologies Used
+
+Programming & Analysis
+
+- 🐍 Python
+- 🐼 Pandas
+- 🔢 NumPy
+
+Visualization
+
+- 📊 Matplotlib
+- 📈 Plotly
+- 📉 Streamlit
+
+Machine Learning
+
+- 🌲 Scikit-learn
+- 🚀 XGBoost
+
+Time-Series Forecasting
+
+- 📉 ARIMA
+- 📊 SARIMA
+- Statsmodels
+
+Development & Deployment
+
+- Git
+- GitHub
+- Streamlit Community Cloud
+- Jupyter Notebook
+
+---
+
+🔄 Project Workflow
+
+Raw Retail Data
+       ↓
+Data Cleaning
+       ↓
+Exploratory Data Analysis
+       ↓
+Feature Engineering
+       ↓
+Demand Aggregation
+       ↓
+Forecasting
+       ↓
+Model Evaluation
+       ↓
+Inventory Risk Analysis
+       ↓
+Business Insights
+       ↓
+Streamlit Dashboard
+       ↓
+Deployment
+
+---
+
+📏 Model Evaluation Metrics
+
+The forecasting models were evaluated using standard regression metrics.
+
+MAE — Mean Absolute Error
+
+Measures the average absolute difference between actual and predicted demand.
+
+Lower MAE indicates better performance.
+
+RMSE — Root Mean Squared Error
+
+Penalizes larger prediction errors more strongly.
+
+Lower RMSE indicates better performance.
+
+MAPE — Mean Absolute Percentage Error
+
+Measures prediction error as a percentage of actual demand.
+
+Lower MAPE generally indicates better forecasting accuracy.
 
 ---
 
 💡 Key Business Insights
 
-The project enables management to:
+The project enables businesses to:
 
-- Monitor overall retail sales performance
-- Compare sales across different channels
-- Identify high-performing stores
-- Identify top-selling products
-- Analyze category performance
-- Understand historical demand patterns
-- Compare actual and predicted demand
-- Evaluate forecasting model performance
-- Identify critical inventory
-- Identify products with low stock coverage
-- Monitor inventory risk across stores and SKUs
-- Support informed replenishment decisions
+- Identify sales trends and seasonal patterns.
+- Understand the contribution of different sales channels.
+- Identify high-demand products.
+- Forecast future demand.
+- Compare forecasting approaches.
+- Detect potential inventory risks.
+- Reduce the possibility of stockouts.
+- Reduce unnecessary overstocking.
+- Improve inventory planning.
+- Support data-driven business decisions.
 
 ---
 
-📌 Key Project Outcomes
+🚀 Installation
 
-The project successfully demonstrates an end-to-end retail analytics workflow involving:
+Clone the repository:
 
-📊 Data Analytics
+git clone https://github.com/Online-Retail-Demand-Forecasting/Online-retail-demand-forcasting.git
 
-Historical transaction analysis and business performance measurement.
+Navigate to the project directory:
 
-🔎 Exploratory Data Analysis
+cd Online-retail-demand-forcasting
 
-Identification of sales, demand, store, product, and channel patterns.
+Create a virtual environment:
 
-⚙️ Feature Engineering
+python -m venv venv
 
-Creation of temporal, lag, and rolling demand features.
+Activate the environment.
 
-🤖 Machine Learning
+Windows
 
-Application of Random Forest and XGBoost for demand prediction.
+venv\Scripts\activate
 
-📈 Time-Series Forecasting
+Install dependencies:
 
-Evaluation of Naive, Seasonal Naive, ARIMA, and SARIMA approaches.
-
-📦 Inventory Intelligence
-
-Identification and classification of inventory risk.
-
-📊 Business Intelligence
-
-Development of an interactive Streamlit dashboard for management-oriented decision support.
+pip install -r requirements.txt
 
 ---
 
-🔮 Future Improvements
+▶️ Running the Dashboard Locally
 
-Potential future enhancements include:
+From the project root directory, run:
 
-- Product-level demand forecasting
-- Store-level demand forecasting
-- Automated future-demand forecasting pipelines
-- Automated model retraining
-- Advanced hyperparameter optimization
-- LightGBM forecasting
-- Prophet-based forecasting
+python -m streamlit run dashboard/app.py
+
+The Streamlit application will open in your browser.
+
+---
+
+☁️ Deployment
+
+The Streamlit dashboard is designed to be deployed using Streamlit Community Cloud.
+
+Deployment configuration
+
+Repository: Your GitHub repository
+Branch: main
+Main file path: dashboard/app.py
+
+The required Python dependencies should be listed in:
+
+requirements.txt
+
+---
+
+📁 Important Files
+
+File| Purpose
+"dashboard/app.py"| Streamlit dashboard
+"01_data_exploration.ipynb"| Initial data exploration
+"02_data_cleaning.ipynb"| Data cleaning
+"03_eda.ipynb"| Exploratory Data Analysis
+"04_demand_forecasting.ipynb"| Forecasting models
+"data_cleaning.py"| Data cleaning functions
+"feature_engineering.py"| Feature creation
+"forecasting.py"| Forecasting utilities
+"requirements.txt"| Python dependencies
+"README.md"| Project documentation
+
+---
+
+🔮 Future Enhancements
+
+Possible future improvements include:
+
 - Real-time inventory monitoring
-- Automated alerts for critical inventory
-- Real-time dashboard data refresh
-- Cloud deployment
-- Automated ETL/data pipelines
-- Advanced inventory optimization
-- Automated replenishment recommendations
-- Integration with live retail systems
+- Automated inventory alerts
+- Advanced hyperparameter tuning
+- Deep-learning forecasting models
+- LSTM/GRU-based demand forecasting
+- Automated model selection
+- Product recommendation systems
+- Real-time data integration
+- Cloud database integration
+- Automated forecast retraining
+- Advanced anomaly detection
+- Role-based dashboard access
 
 ---
 
-👩‍💻 Project
+👥 Project Team
 
-Online Retail Demand Forecasting & Inventory Intelligence
+This project was developed as part of the Zidio Development Internship.
 
-Developed as part of a Data Science & Analytics Internship Project at Zidio Development.
+Project Area
 
-The project demonstrates practical application of:
+Data Science & Analytics
 
-Data Analytics → Machine Learning → Time-Series Forecasting → Inventory Risk Analysis → Business Intelligence
+Focus Areas
+
+- Retail Analytics
+- Demand Forecasting
+- Machine Learning
+- Time-Series Analysis
+- Inventory Intelligence
+- Business Intelligence
+- Data Visualization
 
 ---
 
-⭐ Conclusion
+📌 Conclusion
 
-The Online Retail Demand Forecasting & Inventory Intelligence project combines data analytics, exploratory data analysis, machine learning, statistical forecasting, inventory risk scoring, and interactive visualization into a single end-to-end retail intelligence solution.
+The Online Retail Demand Forecasting & Inventory Intelligence project provides an end-to-end solution for transforming retail transaction data into actionable business intelligence.
 
-The project analyzes approximately 10 million retail transactions and transforms raw transactional data into actionable business insights.
-
-The resulting dashboard provides a management-friendly view of:
-
-- 💰 Sales
-- 📈 Demand
-- 🔮 Forecasting
-- 🛍️ Products
-- 🏷️ Categories
-- 📦 Inventory
-- 🚦 Risk
-
-A key finding from the forecasting experiment was that the Naive Baseline outperformed the tested machine learning models on MAE and MAPE, highlighting the importance of benchmarking complex models against simple forecasting approaches.
-
-Overall, the project demonstrates how data-driven analytics and forecasting can support sales analysis, demand planning, inventory monitoring, and retail decision-making.
+By combining data analytics, machine learning, ARIMA/SARIMA time-series forecasting, inventory risk analysis, and interactive Streamlit dashboards, the project helps businesses better understand demand, anticipate future sales, and make more informed inventory decisions.
 
 ---
 
 ⭐ Project Highlights
 
-10M+        Retail Transactions
-30          Stores
-5,000       Products / SKUs
-10,000      Customers
-2022–2025   Historical Data
-6+          Forecasting Approaches
-21K+        Inventory Risk Records
-Streamlit   Interactive Dashboard
+✔ 9.9M+ cleaned retail transactions
+✔ 5,000 products
+✔ 30 stores
+✔ 10,000 customers
+✔ 2022–2025 historical data
+✔ Machine Learning Forecasting
+✔ ARIMA & SARIMA Forecasting
+✔ Inventory Risk Analysis
+✔ Interactive Streamlit Dashboard
+✔ GitHub-based project structure
+✔ Deployment-ready application
 
 ---
 
-🏆 Technologies
+📜 License
 
-Python • Pandas • NumPy • Scikit-learn • XGBoost • ARIMA • SARIMA • Plotly • Streamlit • Jupyter • Git • GitHub
+This project is developed for educational and internship purposes as part of the Zidio Development Internship.
