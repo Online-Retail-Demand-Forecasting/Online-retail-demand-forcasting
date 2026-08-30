@@ -87,7 +87,6 @@ st.markdown(
             );
 
         padding: 1.8rem 2rem;
-
         border-radius: 18px;
 
         box-shadow:
@@ -155,18 +154,15 @@ st.markdown(
             );
 
         border: 1px solid #E0E7EF;
-
         border-radius: 15px;
 
         padding: 1.1rem 1.2rem;
-
         min-height: 115px;
 
         box-shadow:
             0 5px 18px rgba(15,39,71,0.05);
 
         position: relative;
-
         overflow: hidden;
 
         transition:
@@ -178,7 +174,6 @@ st.markdown(
         content: "";
 
         position: absolute;
-
         top: 0;
         left: 0;
 
@@ -220,8 +215,11 @@ st.markdown(
         font-size: 1.15rem;
         font-weight: 750;
         color: #102A43;
+
         padding-left: 12px;
+
         border-left: 4px solid #2563EB;
+
         margin-top: 1.4rem;
         margin-bottom: 0.7rem;
     }
@@ -234,7 +232,6 @@ st.markdown(
         background: white;
 
         border: 1px solid #E1E8F0;
-
         border-radius: 15px;
 
         padding: 7px;
@@ -249,7 +246,6 @@ st.markdown(
 
     hr {
         border: none !important;
-
         height: 1px !important;
 
         background:
@@ -296,7 +292,9 @@ st.markdown(
     .footer-text {
         text-align: center;
         color: #8191A1;
+
         font-size: 0.75rem;
+
         padding-top: 1rem;
     }
 
@@ -307,46 +305,123 @@ st.markdown(
 
 
 # ============================================================
-# DATA PATH
+# PROJECT PATH
 # ============================================================
 
-DATA_PATH = (
-    r"C:\Users\Pawan\OneDrive\Desktop\Online-Retail-II"
-    r"\Online-retail-demand-forcasting\data\processed"
-    r"\sales_transactions_cleaned.csv"
-)
+from pathlib import Path
 
+# This file is:
+# dashboard/pages/1_Sales_Analytics.py
+#
+# Therefore:
+# parents[0] = pages
+# parents[1] = dashboard
+# parents[2] = project root
+#
+# Project root:
+# Online-retail-demand-forcasting/
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+DEPLOYMENT_PATH = PROJECT_ROOT / "data" / "deployment"
+
+DAILY_PATH = DEPLOYMENT_PATH / "daily_sales_dashboard.csv"
+STORE_PATH = DEPLOYMENT_PATH / "store_sales_dashboard.csv"
+CHANNEL_PATH = DEPLOYMENT_PATH / "channel_sales_dashboard.csv"
+YEARLY_PATH = DEPLOYMENT_PATH / "yearly_sales_dashboard.csv"
 # ============================================================
-# LOAD DATA
+# LOAD DEPLOYMENT DATA
 # ============================================================
 
 @st.cache_data(show_spinner=False)
-def load_sales_data(path):
+def load_deployment_data():
 
-    df = pd.read_csv(path)
+    daily = pd.read_csv(DAILY_PATH)
+    store = pd.read_csv(STORE_PATH)
+    channel = pd.read_csv(CHANNEL_PATH)
+    yearly = pd.read_csv(YEARLY_PATH)
 
-    if "date" in df.columns:
-        df["date"] = pd.to_datetime(
-            df["date"],
+    # --------------------------------------------------------
+    # DAILY DATA
+    # --------------------------------------------------------
+
+    if "date" in daily.columns:
+        daily["date"] = pd.to_datetime(
+            daily["date"],
             errors="coerce"
         )
 
-        df["year"] = df["date"].dt.year
+    daily_numeric_columns = [
+        "year",
+        "total_value",
+        "quantity",
+        "transactions",
+        "active_stores",
+        "active_products"
+    ]
 
-    if "total_value" in df.columns:
-        df["total_value"] = pd.to_numeric(
-            df["total_value"],
-            errors="coerce"
-        ).fillna(0)
+    for col in daily_numeric_columns:
+        if col in daily.columns:
+            daily[col] = pd.to_numeric(
+                daily[col],
+                errors="coerce"
+            ).fillna(0)
 
-    if "quantity" in df.columns:
-        df["quantity"] = pd.to_numeric(
-            df["quantity"],
-            errors="coerce"
-        ).fillna(0)
+    # --------------------------------------------------------
+    # STORE DATA
+    # --------------------------------------------------------
 
-    return df
+    store_numeric_columns = [
+        "year",
+        "total_value",
+        "quantity",
+        "transactions"
+    ]
+
+    for col in store_numeric_columns:
+        if col in store.columns:
+            store[col] = pd.to_numeric(
+                store[col],
+                errors="coerce"
+            ).fillna(0)
+
+    # --------------------------------------------------------
+    # CHANNEL DATA
+    # --------------------------------------------------------
+
+    channel_numeric_columns = [
+        "year",
+        "total_value",
+        "quantity",
+        "transactions"
+    ]
+
+    for col in channel_numeric_columns:
+        if col in channel.columns:
+            channel[col] = pd.to_numeric(
+                channel[col],
+                errors="coerce"
+            ).fillna(0)
+
+    # --------------------------------------------------------
+    # YEARLY DATA
+    # --------------------------------------------------------
+
+    yearly_numeric_columns = [
+        "year",
+        "total_value",
+        "quantity",
+        "transactions"
+    ]
+
+    for col in yearly_numeric_columns:
+        if col in yearly.columns:
+            yearly[col] = pd.to_numeric(
+                yearly[col],
+                errors="coerce"
+            ).fillna(0)
+
+    return daily, store, channel, yearly
 
 
 # ============================================================
@@ -355,19 +430,63 @@ def load_sales_data(path):
 
 try:
 
-    sales_df = load_sales_data(DATA_PATH)
+    daily_df, store_df, channel_df, yearly_df = (
+        load_deployment_data()
+    )
 
 except Exception as e:
 
-    st.error("Unable to load the sales dataset.")
+    st.error(
+        "Unable to load the Sales Analytics deployment data."
+    )
 
-    st.write("Expected location:")
+    st.write("Expected deployment folder:")
 
-    st.code(DATA_PATH)
+    st.code(
+        "data/deployment/"
+    )
 
     st.write("Error:")
 
     st.code(str(e))
+
+    st.stop()
+
+
+# ============================================================
+# BASIC COLUMN VALIDATION
+# ============================================================
+
+required_daily_columns = [
+    "date",
+    "year",
+    "channel",
+    "total_value",
+    "quantity",
+    "transactions",
+    "active_stores",
+    "active_products"
+]
+
+missing_daily_columns = [
+    col
+    for col in required_daily_columns
+    if col not in daily_df.columns
+]
+
+if missing_daily_columns:
+
+    st.error(
+        "The daily deployment dataset is missing required columns."
+    )
+
+    st.write(
+        "Missing columns:"
+    )
+
+    st.code(
+        ", ".join(missing_daily_columns)
+    )
 
     st.stop()
 
@@ -438,19 +557,17 @@ st.sidebar.divider()
 # YEAR FILTER
 # ============================================================
 
-if "year" in sales_df.columns:
+years = sorted(
+    daily_df["year"]
+    .dropna()
+    .unique()
+    .tolist()
+)
 
-    years = sorted(
-        sales_df["year"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
-else:
-
-    years = []
-
+years = [
+    int(year)
+    for year in years
+]
 
 selected_years = st.sidebar.multiselect(
     "Select Year",
@@ -463,20 +580,13 @@ selected_years = st.sidebar.multiselect(
 # CHANNEL FILTER
 # ============================================================
 
-if "channel" in sales_df.columns:
-
-    channels = sorted(
-        sales_df["channel"]
-        .dropna()
-        .astype(str)
-        .unique()
-        .tolist()
-    )
-
-else:
-
-    channels = []
-
+channels = sorted(
+    daily_df["channel"]
+    .dropna()
+    .astype(str)
+    .unique()
+    .tolist()
+)
 
 selected_channels = st.sidebar.multiselect(
     "Select Channel",
@@ -486,27 +596,110 @@ selected_channels = st.sidebar.multiselect(
 
 
 # ============================================================
-# FILTER DATA
+# FILTER DAILY DATA
 # ============================================================
 
-filtered_sales = sales_df
-
+filtered_daily = daily_df.copy()
 
 if selected_years:
 
-    filtered_sales = filtered_sales[
-        filtered_sales["year"].isin(selected_years)
+    filtered_daily = filtered_daily[
+        filtered_daily["year"].isin(selected_years)
+    ]
+
+if selected_channels:
+
+    filtered_daily = filtered_daily[
+        filtered_daily["channel"].isin(
+            selected_channels
+        )
     ]
 
 
-if selected_channels and "channel" in filtered_sales.columns:
+# ============================================================
+# FILTER STORE DATA
+# ============================================================
 
-    filtered_sales = filtered_sales[
-        filtered_sales["channel"].isin(selected_channels)
-    ]
+filtered_store = store_df.copy()
+
+if "year" in filtered_store.columns:
+
+    if selected_years:
+
+        filtered_store = filtered_store[
+            filtered_store["year"].isin(selected_years)
+        ]
+
+if "channel" in filtered_store.columns:
+
+    if selected_channels:
+
+        filtered_store = filtered_store[
+            filtered_store["channel"].isin(
+                selected_channels
+            )
+        ]
 
 
-if filtered_sales.empty:
+# ============================================================
+# FILTER CHANNEL DATA
+# ============================================================
+
+filtered_channel = channel_df.copy()
+
+if "year" in filtered_channel.columns:
+
+    if selected_years:
+
+        filtered_channel = filtered_channel[
+            filtered_channel["year"].isin(selected_years)
+        ]
+
+if "channel" in filtered_channel.columns:
+
+    if selected_channels:
+
+        filtered_channel = filtered_channel[
+            filtered_channel["channel"].isin(
+                selected_channels
+            )
+        ]
+
+
+# ============================================================
+# FILTER YEARLY DATA
+# ============================================================
+
+filtered_yearly = yearly_df.copy()
+
+if "year" in filtered_yearly.columns:
+
+    if selected_years:
+
+        filtered_yearly = filtered_yearly[
+            filtered_yearly["year"].isin(selected_years)
+        ]
+
+# IMPORTANT:
+# yearly_sales_dashboard.csv may NOT contain a channel column.
+# Therefore we only filter it by channel when that column exists.
+
+if "channel" in filtered_yearly.columns:
+
+    if selected_channels:
+
+        filtered_yearly = filtered_yearly[
+            filtered_yearly["channel"].isin(
+                selected_channels
+            )
+        ]
+
+
+# ============================================================
+# EMPTY CHECK
+# ============================================================
+
+if filtered_daily.empty:
 
     st.warning(
         "No sales records match the selected filters."
@@ -545,43 +738,24 @@ st.info(
 # ============================================================
 
 total_sales = (
-    filtered_sales["total_value"].sum()
-    if "total_value" in filtered_sales.columns
-    else 0
+    filtered_daily["total_value"].sum()
 )
 
-
-if "receipt_id" in filtered_sales.columns:
-
-    transactions = filtered_sales[
-        "receipt_id"
-    ].nunique()
-
-else:
-
-    transactions = len(filtered_sales)
-
+transactions = (
+    filtered_daily["transactions"].sum()
+)
 
 total_quantity = (
-    filtered_sales["quantity"].sum()
-    if "quantity" in filtered_sales.columns
-    else 0
+    filtered_daily["quantity"].sum()
 )
-
 
 stores = (
-    filtered_sales["store_id"].nunique()
-    if "store_id" in filtered_sales.columns
-    else 0
+    filtered_daily["active_stores"].max()
 )
-
 
 products = (
-    filtered_sales["sku_id"].nunique()
-    if "sku_id" in filtered_sales.columns
-    else 0
+    filtered_daily["active_products"].max()
 )
-
 
 average_order_value = (
     total_sales / transactions
@@ -658,77 +832,81 @@ st.caption(
 )
 
 
-if (
-    "date" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
-):
+daily_sales = (
+    filtered_daily
+    .groupby("date", sort=True)["total_value"]
+    .sum()
+    .reset_index()
+)
 
-    daily_sales = (
-        filtered_sales
-        .groupby("date", sort=True)["total_value"]
-        .sum()
-        .reset_index()
-    )
 
-    fig_sales = px.line(
-        daily_sales,
-        x="date",
-        y="total_value"
-    )
+fig_sales = px.line(
+    daily_sales,
+    x="date",
+    y="total_value"
+)
 
-    fig_sales.update_traces(
-        line=dict(
-            color="#2563EB",
-            width=3
-        ),
 
-        fill="tozeroy",
+fig_sales.update_traces(
 
-        fillcolor="rgba(37,99,235,0.08)",
+    line=dict(
+        color="#2563EB",
+        width=3
+    ),
 
-        hovertemplate=
-        "<b>%{x|%d %b %Y}</b>"
-        "<br>Sales: ₹%{y:,.0f}"
-        "<extra></extra>"
-    )
+    fill="tozeroy",
 
-    fig_sales.update_layout(
-        height=430,
+    fillcolor="rgba(37,99,235,0.08)",
 
-        template="plotly_white",
+    hovertemplate=
+    "<b>%{x|%d %b %Y}</b>"
+    "<br>Sales: ₹%{y:,.0f}"
+    "<extra></extra>"
+)
 
-        margin=dict(
-            l=20,
-            r=20,
-            t=20,
-            b=20
-        ),
 
-        xaxis=dict(
-            title="",
-            showgrid=False
-        ),
+fig_sales.update_layout(
 
-        yaxis=dict(
-            title="Sales (₹)",
-            gridcolor="#EEF2F6"
-        ),
+    height=430,
 
-        hovermode="x unified",
+    template="plotly_white",
 
-        paper_bgcolor="rgba(0,0,0,0)",
+    margin=dict(
+        l=20,
+        r=20,
+        t=20,
+        b=20
+    ),
 
-        plot_bgcolor="white"
-    )
+    xaxis=dict(
+        title="",
+        showgrid=False
+    ),
 
-    st.plotly_chart(
-        fig_sales,
-        use_container_width=True,
-        config={
-            "displayModeBar": False,
-            "responsive": True
-        }
-    )
+    yaxis=dict(
+        title="Sales (₹)",
+        gridcolor="#EEF2F6"
+    ),
+
+    hovermode="x unified",
+
+    paper_bgcolor="rgba(0,0,0,0)",
+
+    plot_bgcolor="white"
+)
+
+
+st.plotly_chart(
+
+    fig_sales,
+
+    use_container_width=True,
+
+    config={
+        "displayModeBar": False,
+        "responsive": True
+    }
+)
 
 
 # ============================================================
@@ -751,18 +929,33 @@ with left:
         unsafe_allow_html=True
     )
 
+    st.caption(
+        "Revenue contribution by sales channel."
+    )
+
     if (
-        "channel" in filtered_sales.columns
-        and "total_value" in filtered_sales.columns
+        "channel" in filtered_channel.columns
+        and "total_value" in filtered_channel.columns
     ):
 
         channel_sales = (
-            filtered_sales
+            filtered_channel
             .groupby("channel")["total_value"]
             .sum()
             .sort_values(ascending=False)
             .reset_index()
         )
+
+    else:
+
+        channel_sales = pd.DataFrame(
+            columns=[
+                "channel",
+                "total_value"
+            ]
+        )
+
+    if not channel_sales.empty:
 
         fig_channel = px.bar(
             channel_sales,
@@ -770,7 +963,9 @@ with left:
             y="total_value"
         )
 
+
         fig_channel.update_traces(
+
             marker_color="#2563EB",
 
             hovertemplate=
@@ -779,7 +974,9 @@ with left:
             "<extra></extra>"
         )
 
+
         fig_channel.update_layout(
+
             height=400,
 
             template="plotly_white",
@@ -806,12 +1003,22 @@ with left:
             plot_bgcolor="white"
         )
 
+
         st.plotly_chart(
+
             fig_channel,
+
             use_container_width=True,
+
             config={
                 "displayModeBar": False
             }
+        )
+
+    else:
+
+        st.info(
+            "Channel sales data is not available."
         )
 
 
@@ -826,20 +1033,28 @@ with right:
         unsafe_allow_html=True
     )
 
-    if (
-        "channel" in filtered_sales.columns
-        and "total_value" in filtered_sales.columns
-    ):
+    st.caption(
+        "Share of total sales by channel."
+    )
+
+    if not channel_sales.empty:
 
         fig_channel_pie = px.pie(
+
             channel_sales,
+
             names="channel",
+
             values="total_value",
+
             hole=0.55
         )
 
+
         fig_channel_pie.update_traces(
+
             textposition="inside",
+
             textinfo="percent",
 
             marker=dict(
@@ -859,7 +1074,9 @@ with right:
             "<extra></extra>"
         )
 
+
         fig_channel_pie.update_layout(
+
             height=400,
 
             template="plotly_white",
@@ -878,12 +1095,22 @@ with right:
             showlegend=True
         )
 
+
         st.plotly_chart(
+
             fig_channel_pie,
+
             use_container_width=True,
+
             config={
                 "displayModeBar": False
             }
+        )
+
+    else:
+
+        st.info(
+            "Channel distribution data is not available."
         )
 
 
@@ -904,12 +1131,12 @@ st.caption(
 
 
 if (
-    "store_id" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
+    "store_id" in filtered_store.columns
+    and "total_value" in filtered_store.columns
 ):
 
     store_sales = (
-        filtered_sales
+        filtered_store
         .groupby("store_id")["total_value"]
         .sum()
         .sort_values(ascending=True)
@@ -917,14 +1144,32 @@ if (
         .reset_index()
     )
 
+else:
+
+    store_sales = pd.DataFrame(
+        columns=[
+            "store_id",
+            "total_value"
+        ]
+    )
+
+
+if not store_sales.empty:
+
     fig_store = px.bar(
+
         store_sales,
+
         x="total_value",
+
         y="store_id",
+
         orientation="h"
     )
 
+
     fig_store.update_traces(
+
         marker_color="#0EA5E9",
 
         hovertemplate=
@@ -933,7 +1178,9 @@ if (
         "<extra></extra>"
     )
 
+
     fig_store.update_layout(
+
         height=500,
 
         template="plotly_white",
@@ -960,12 +1207,22 @@ if (
         plot_bgcolor="white"
     )
 
+
     st.plotly_chart(
+
         fig_store,
+
         use_container_width=True,
+
         config={
             "displayModeBar": False
         }
+    )
+
+else:
+
+    st.info(
+        "Store performance data is not available."
     )
 
 
@@ -986,25 +1243,42 @@ st.caption(
 
 
 if (
-    "year" in filtered_sales.columns
-    and "total_value" in filtered_sales.columns
+    "year" in filtered_yearly.columns
+    and "total_value" in filtered_yearly.columns
 ):
 
     yearly_sales = (
-        filtered_sales
+        filtered_yearly
         .groupby("year")["total_value"]
         .sum()
         .reset_index()
         .sort_values("year")
     )
 
+else:
+
+    yearly_sales = pd.DataFrame(
+        columns=[
+            "year",
+            "total_value"
+        ]
+    )
+
+
+if not yearly_sales.empty:
+
     fig_year = px.bar(
+
         yearly_sales,
+
         x="year",
+
         y="total_value"
     )
 
+
     fig_year.update_traces(
+
         marker_color="#14B8A6",
 
         hovertemplate=
@@ -1013,7 +1287,9 @@ if (
         "<extra></extra>"
     )
 
+
     fig_year.update_layout(
+
         height=400,
 
         template="plotly_white",
@@ -1040,12 +1316,22 @@ if (
         plot_bgcolor="white"
     )
 
+
     st.plotly_chart(
+
         fig_year,
+
         use_container_width=True,
+
         config={
             "displayModeBar": False
         }
+    )
+
+else:
+
+    st.info(
+        "Year-wise sales data is not available."
     )
 
 
@@ -1056,6 +1342,8 @@ if (
 st.divider()
 
 st.markdown(
-    '<div class="footer-text">Retail Demand Forecasting | Sales Analytics</div>',
+    '<div class="footer-text">'
+    'Retail Demand Forecasting | Sales Analytics'
+    '</div>',
     unsafe_allow_html=True
 )
