@@ -203,6 +203,32 @@ yearly_sales.to_csv(
 print(f"Saved: {year_file}")
 
 # ============================================================
+# CREATE PRODUCT SALES DATA
+# ============================================================
+
+print("\nCreating product sales summary...")
+
+product_sales = (
+    df.groupby(
+        ["sku_id", "date", "store_id", "channel", "receipt_id"],
+        as_index=False
+    )
+    .agg(
+        quantity=("quantity", "sum"),
+        total_value=("total_value", "sum")
+    )
+)
+
+product_file = OUTPUT_DIR / "product_sales_dashboard.csv"
+
+product_sales.to_csv(
+    product_file,
+    index=False
+)
+
+print(f"Saved: {product_file}")
+
+# ============================================================
 # FINAL INFORMATION
 # ============================================================
 

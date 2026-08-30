@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -24,10 +26,6 @@ st.markdown(
     """
     <style>
 
-    /* ========================================================
-       GLOBAL
-       ======================================================== */
-
     .stApp {
         background:
             radial-gradient(
@@ -45,11 +43,6 @@ st.markdown(
         padding-left: 2.5rem;
         padding-right: 2.5rem;
     }
-
-
-    /* ========================================================
-       TYPOGRAPHY
-       ======================================================== */
 
     h1 {
         color: #0B1F3A !important;
@@ -74,11 +67,6 @@ st.markdown(
         line-height: 1.6;
     }
 
-
-    /* ========================================================
-       PAGE TITLE
-       ======================================================== */
-
     div[data-testid="stTitle"] {
         background:
             linear-gradient(
@@ -89,7 +77,6 @@ st.markdown(
             );
 
         padding: 1.8rem 2rem;
-
         border-radius: 18px;
 
         box-shadow:
@@ -102,11 +89,6 @@ st.markdown(
         color: #FFFFFF !important;
         margin-bottom: 0 !important;
     }
-
-
-    /* ========================================================
-       SIDEBAR
-       ======================================================== */
 
     section[data-testid="stSidebar"] {
         background:
@@ -155,11 +137,6 @@ st.markdown(
         border-radius: 9px !important;
     }
 
-
-    /* ========================================================
-       KPI CARDS
-       ======================================================== */
-
     div[data-testid="stMetric"] {
         background:
             linear-gradient(
@@ -169,18 +146,15 @@ st.markdown(
             );
 
         border: 1px solid #E0E7EF;
-
         border-radius: 15px;
 
         padding: 1.15rem 1.2rem;
-
         min-height: 120px;
 
         box-shadow:
             0 5px 18px rgba(15,39,71,0.05);
 
         position: relative;
-
         overflow: hidden;
 
         transition:
@@ -226,31 +200,23 @@ st.markdown(
         font-weight: 800 !important;
     }
 
-
-    /* ========================================================
-       SECTION TITLES
-       ======================================================== */
-
     .section-title {
         font-size: 1.15rem;
         font-weight: 750;
         color: #102A43;
+
         padding-left: 12px;
+
         border-left: 4px solid #2563EB;
+
         margin-top: 1.4rem;
         margin-bottom: 0.5rem;
     }
-
-
-    /* ========================================================
-       PLOTLY CHART CONTAINERS
-       ======================================================== */
 
     div[data-testid="stPlotlyChart"] {
         background: #FFFFFF;
 
         border: 1px solid #E1E8F0;
-
         border-radius: 15px;
 
         padding: 7px;
@@ -259,16 +225,10 @@ st.markdown(
             0 5px 18px rgba(15,39,71,0.045);
     }
 
-
-    /* ========================================================
-       DATA TABLE
-       ======================================================== */
-
     div[data-testid="stDataFrame"] {
         background: #FFFFFF;
 
         border: 1px solid #E1E8F0;
-
         border-radius: 14px;
 
         overflow: hidden;
@@ -277,19 +237,9 @@ st.markdown(
             0 5px 18px rgba(15,39,71,0.045);
     }
 
-
-    /* ========================================================
-       INFO / WARNING / ERROR
-       ======================================================== */
-
     div[data-testid="stAlert"] {
         border-radius: 12px !important;
     }
-
-
-    /* ========================================================
-       DIVIDERS
-       ======================================================== */
 
     hr {
         border: none !important;
@@ -307,22 +257,14 @@ st.markdown(
         margin: 1.4rem 0 !important;
     }
 
-
-    /* ========================================================
-       FOOTER
-       ======================================================== */
-
     .footer-text {
         text-align: center;
         color: #8191A1;
+
         font-size: 0.75rem;
+
         padding-top: 1rem;
     }
-
-
-    /* ========================================================
-       SCROLLBAR
-       ======================================================== */
 
     ::-webkit-scrollbar {
         width: 7px;
@@ -345,13 +287,16 @@ st.markdown(
 
 
 # ============================================================
-# DATA PATH
+# PROJECT PATHS
 # ============================================================
 
-DATA_PATH = (
-    r"C:\Users\Pawan\OneDrive\Desktop\Online-Retail-II"
-    r"\Online-retail-demand-forcasting\data\processed"
-    r"\demand_forecast_results.csv"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+DEPLOYMENT_PATH = PROJECT_ROOT / "data" / "deployment"
+
+FORECAST_PATH = (
+    DEPLOYMENT_PATH /
+    "demand_forecast_results.csv"
 )
 
 
@@ -362,21 +307,21 @@ DATA_PATH = (
 @st.cache_data(show_spinner=False)
 def load_forecast_data(path):
 
-    if not os.path.exists(path):
+    path = Path(path)
+
+    if not path.exists():
         return None
 
     try:
-
-        df = pd.read_csv(path)
-
-        return df
+        return pd.read_csv(path)
 
     except Exception:
-
         return None
 
 
-forecast_df = load_forecast_data(DATA_PATH)
+forecast_df = load_forecast_data(
+    FORECAST_PATH
+)
 
 
 # ============================================================
@@ -391,7 +336,9 @@ if forecast_df is None:
 
     st.write("Expected location:")
 
-    st.code(DATA_PATH)
+    st.code(
+        str(FORECAST_PATH)
+    )
 
     st.stop()
 
@@ -420,7 +367,10 @@ if missing_columns:
         "The forecast dataset is missing required columns."
     )
 
-    st.write(missing_columns)
+    st.write(
+        "Missing columns:",
+        missing_columns
+    )
 
     st.write("Available columns:")
 
@@ -467,7 +417,9 @@ def prepare_forecast_data(df):
         "date"
     )
 
-    df["year"] = df["date"].dt.year
+    df["year"] = (
+        df["date"].dt.year
+    )
 
     return df
 
@@ -475,6 +427,19 @@ def prepare_forecast_data(df):
 forecast_df = prepare_forecast_data(
     forecast_df
 )
+
+
+# ============================================================
+# EMPTY DATA CHECK
+# ============================================================
+
+if forecast_df.empty:
+
+    st.error(
+        "The forecast dataset contains no valid records."
+    )
+
+    st.stop()
 
 
 # ============================================================
@@ -502,7 +467,6 @@ def format_difference(value):
     value = float(value)
 
     if value > 0:
-
         return f"+{format_number(value)}"
 
     return format_number(value)
@@ -556,16 +520,18 @@ selected_years = st.sidebar.multiselect(
 # FILTER DATA
 # ============================================================
 
-filtered_forecast = forecast_df
+filtered_forecast = forecast_df.copy()
 
 
 if selected_years:
 
-    filtered_forecast = filtered_forecast[
-        filtered_forecast["year"].isin(
-            selected_years
-        )
-    ]
+    filtered_forecast = (
+        filtered_forecast[
+            filtered_forecast["year"].isin(
+                selected_years
+            )
+        ]
+    )
 
 
 if filtered_forecast.empty:
@@ -613,17 +579,22 @@ st.caption(
 
 
 actual_demand = (
-    filtered_forecast["actual_demand"].sum()
+    filtered_forecast[
+        "actual_demand"
+    ].sum()
 )
 
 
 predicted_demand = (
-    filtered_forecast["predicted_demand"].sum()
+    filtered_forecast[
+        "predicted_demand"
+    ].sum()
 )
 
 
 forecast_difference = (
-    predicted_demand - actual_demand
+    predicted_demand -
+    actual_demand
 )
 
 
@@ -659,12 +630,18 @@ forecast_records = len(
     filtered_forecast
 )
 
+
 mean_actual = (
-    filtered_forecast["actual_demand"].mean()
+    filtered_forecast[
+        "actual_demand"
+    ].mean()
 )
 
+
 mean_predicted = (
-    filtered_forecast["predicted_demand"].mean()
+    filtered_forecast[
+        "predicted_demand"
+    ].mean()
 )
 
 
@@ -695,7 +672,9 @@ with kpi3:
 
     st.metric(
         "📐 Forecast Difference",
-        format_difference(forecast_difference)
+        format_difference(
+            forecast_difference
+        )
     )
 
 
@@ -823,7 +802,8 @@ st.markdown(
 )
 
 st.caption(
-    "Positive values indicate over-prediction; negative values indicate under-prediction."
+    "Positive values indicate over-prediction; "
+    "negative values indicate under-prediction."
 )
 
 
@@ -840,9 +820,13 @@ forecast_difference_df = (
 
 
 forecast_difference_df["difference"] = (
-    forecast_difference_df["predicted_demand"]
+    forecast_difference_df[
+        "predicted_demand"
+    ]
     -
-    forecast_difference_df["actual_demand"]
+    forecast_difference_df[
+        "actual_demand"
+    ]
 )
 
 
@@ -938,7 +922,10 @@ st.caption(
 monthly_forecast = (
     filtered_forecast
     .assign(
-        month=filtered_forecast["date"].dt.to_period("M")
+        month=
+        filtered_forecast[
+            "date"
+        ].dt.to_period("M")
     )
     .groupby("month")
     .agg(
@@ -957,28 +944,37 @@ monthly_forecast = (
 
 
 monthly_forecast["month"] = (
-    monthly_forecast["month"]
-    .astype(str)
+    monthly_forecast[
+        "month"
+    ].astype(str)
 )
 
 
 monthly_long = monthly_forecast.melt(
     id_vars=["month"],
+
     value_vars=[
         "Actual_Demand",
         "Predicted_Demand"
     ],
+
     var_name="Demand Type",
+
     value_name="Demand"
 )
 
 
 fig_monthly = px.bar(
     monthly_long,
+
     x="month",
+
     y="Demand",
+
     color="Demand Type",
+
     barmode="group",
+
     color_discrete_map={
         "Actual_Demand": "#2563EB",
         "Predicted_Demand": "#F59E0B"
@@ -1061,7 +1057,9 @@ with performance1:
 
     st.metric(
         "Forecast Records",
-        format_number(forecast_records)
+        format_number(
+            forecast_records
+        )
     )
 
 
@@ -1069,7 +1067,9 @@ with performance2:
 
     st.metric(
         "Avg. Actual Demand",
-        format_number(mean_actual)
+        format_number(
+            mean_actual
+        )
     )
 
 
@@ -1077,7 +1077,9 @@ with performance3:
 
     st.metric(
         "Avg. Predicted Demand",
-        format_number(mean_predicted)
+        format_number(
+            mean_predicted
+        )
     )
 
 
@@ -1108,9 +1110,11 @@ display_columns = [
 ]
 
 
-display_df = filtered_forecast[
-    display_columns
-].copy()
+display_df = (
+    filtered_forecast[
+        display_columns
+    ].copy()
+)
 
 
 display_df = display_df.rename(
@@ -1137,6 +1141,10 @@ st.dataframe(
 st.divider()
 
 st.markdown(
-    '<div class="footer-text">Retail Demand Forecasting | Machine Learning Demand Analytics</div>',
+    '<div class="footer-text">'
+    'Retail Demand Forecasting | '
+    'Machine Learning Demand Analytics'
+    '</div>',
     unsafe_allow_html=True
 )
+

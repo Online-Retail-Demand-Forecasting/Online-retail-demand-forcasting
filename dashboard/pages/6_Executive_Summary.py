@@ -194,7 +194,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # ============================================================
 # PROJECT PATHS
 # ============================================================
@@ -207,27 +206,26 @@ BASE_DIR = os.path.dirname(
     )
 )
 
-PROCESSED_PATH = os.path.join(
+DEPLOYMENT_PATH = os.path.join(
     BASE_DIR,
     "data",
-    "processed"
+    "deployment"
 )
 
 SALES_PATH = os.path.join(
-    PROCESSED_PATH,
-    "sales_transactions_cleaned.csv"
+    DEPLOYMENT_PATH,
+    "product_sales_dashboard.csv"
 )
 
 FORECAST_PATH = os.path.join(
-    PROCESSED_PATH,
+    DEPLOYMENT_PATH,
     "demand_forecast_results.csv"
 )
 
 INVENTORY_PATH = os.path.join(
-    PROCESSED_PATH,
+    DEPLOYMENT_PATH,
     "inventory_risk_scoring.csv"
 )
-
 
 # ============================================================
 # SIDEBAR

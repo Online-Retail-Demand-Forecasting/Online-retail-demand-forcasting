@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -9,48 +11,260 @@ import plotly.express as px
 # ============================================================
 
 st.set_page_config(
-    page_title="Product Intelligence",
-    page_icon="🛍️",
+    page_title="Product Details",
+    page_icon="📦",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 
 # ============================================================
-# PROFESSIONAL DARK SIDEBAR
+# PROFESSIONAL STYLE
 # ============================================================
 
 st.markdown(
     """
     <style>
 
+    .stApp {
+        background:
+            radial-gradient(
+                circle at 90% 0%,
+                rgba(37, 99, 235, 0.08),
+                transparent 25%
+            ),
+            #F4F7FB;
+    }
+
+    .main .block-container {
+        max-width: 1500px;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+    }
+
+    h1 {
+        color: #0B1F3A !important;
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -1px;
+    }
+
+    h2 {
+        color: #102A43 !important;
+        font-size: 1.45rem !important;
+        font-weight: 750 !important;
+    }
+
+    h3 {
+        color: #183B56 !important;
+        font-weight: 700 !important;
+    }
+
+    p {
+        color: #52667A;
+        line-height: 1.6;
+    }
+
+    div[data-testid="stTitle"] {
+        background:
+            linear-gradient(
+                135deg,
+                #0B1F3A 0%,
+                #123E67 55%,
+                #2563A6 100%
+            );
+
+        padding: 1.8rem 2rem;
+        border-radius: 18px;
+
+        box-shadow:
+            0 12px 35px rgba(11, 31, 58, 0.16);
+
+        margin-bottom: 0.7rem;
+    }
+
+    div[data-testid="stTitle"] h1 {
+        color: #FFFFFF !important;
+        margin-bottom: 0 !important;
+    }
+
     section[data-testid="stSidebar"] {
-        background-color: #0F172A !important;
+        background:
+            linear-gradient(
+                180deg,
+                #0B1F3A 0%,
+                #102A43 55%,
+                #0A1D35 100%
+            );
+
+        border-right: none;
+
+        box-shadow:
+            8px 0 30px rgba(15, 23, 42, 0.12);
     }
 
-    section[data-testid="stSidebar"] * {
-        color: #F8FAFC !important;
+    section[data-testid="stSidebar"] h1 {
+        color: #FFFFFF !important;
+        font-size: 1.3rem !important;
+        font-weight: 800 !important;
     }
 
-    section[data-testid="stSidebar"] .stCaption {
-        color: #94A3B8 !important;
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3 {
+        color: #FFFFFF !important;
     }
 
-    section[data-testid="stSidebar"] hr {
-        border-color: #334155 !important;
-    }
-
-    section[data-testid="stSidebar"] [data-testid="stAlert"] {
-        background-color: #1E293B !important;
-        border: 1px solid #334155 !important;
+    section[data-testid="stSidebar"] p {
+        color: #B7C8D9 !important;
+        font-size: 0.8rem !important;
     }
 
     section[data-testid="stSidebar"] label {
-        color: #CBD5E1 !important;
+        color: #DCE8F3 !important;
+        font-weight: 600 !important;
     }
 
-    section[data-testid="stSidebar"] input {
-        color: #0F172A !important;
+    section[data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.12) !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[data-baseweb="select"] > div {
+        background: rgba(255,255,255,0.08) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 9px !important;
+    }
+
+    div[data-testid="stMetric"] {
+        background:
+            linear-gradient(
+                145deg,
+                #FFFFFF,
+                #F8FAFD
+            );
+
+        border: 1px solid #E0E7EF;
+        border-radius: 15px;
+
+        padding: 1.15rem 1.2rem;
+
+        min-height: 120px;
+
+        box-shadow:
+            0 5px 18px rgba(15,39,71,0.05);
+
+        position: relative;
+        overflow: hidden;
+
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    div[data-testid="stMetric"]::before {
+        content: "";
+
+        position: absolute;
+
+        top: 0;
+        left: 0;
+
+        width: 100%;
+        height: 4px;
+
+        background:
+            linear-gradient(
+                90deg,
+                #2563EB,
+                #06B6D4
+            );
+    }
+
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-4px);
+
+        box-shadow:
+            0 12px 28px rgba(15,39,71,0.09);
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #718398 !important;
+        font-size: 0.78rem !important;
+        font-weight: 650 !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #102A43 !important;
+        font-size: 1.45rem !important;
+        font-weight: 800 !important;
+    }
+
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 750;
+        color: #102A43;
+
+        padding-left: 12px;
+
+        border-left: 4px solid #2563EB;
+
+        margin-top: 1.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    div[data-testid="stPlotlyChart"] {
+        background: #FFFFFF;
+
+        border: 1px solid #E1E8F0;
+
+        border-radius: 15px;
+
+        padding: 7px;
+
+        box-shadow:
+            0 5px 18px rgba(15,39,71,0.045);
+    }
+
+    div[data-testid="stDataFrame"] {
+        background: #FFFFFF;
+
+        border: 1px solid #E1E8F0;
+
+        border-radius: 14px;
+
+        overflow: hidden;
+
+        box-shadow:
+            0 5px 18px rgba(15,39,71,0.045);
+    }
+
+    div[data-testid="stAlert"] {
+        border-radius: 12px !important;
+    }
+
+    hr {
+        border: none !important;
+
+        height: 1px !important;
+
+        background:
+            linear-gradient(
+                90deg,
+                transparent,
+                #D5DEE8,
+                transparent
+            ) !important;
+
+        margin: 1.4rem 0 !important;
+    }
+
+    .footer-text {
+        text-align: center;
+        color: #8191A1;
+        font-size: 0.75rem;
+        padding-top: 1rem;
     }
 
     </style>
@@ -60,310 +274,143 @@ st.markdown(
 
 
 # ============================================================
-# PROJECT PATH
+# PROJECT PATHS
 # ============================================================
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-SALES_PATH = os.path.join(
-    BASE_DIR,
-    "data",
-    "processed",
-    "sales_transactions_cleaned.csv"
-)
+DEPLOYMENT_PATH = PROJECT_ROOT / "data" / "deployment"
 
-INVENTORY_PATH = os.path.join(
-    BASE_DIR,
-    "data",
-    "processed",
-    "inventory_risk_scoring.csv"
+PRODUCT_PATH = (
+    DEPLOYMENT_PATH /
+    "product_sales_dashboard_compact.csv"
 )
 
 
 # ============================================================
-# COLORS
+# LOAD PRODUCT DATA
 # ============================================================
 
-BLUE = "#2563EB"
-TEAL = "#0F766E"
-GREEN = "#16A34A"
-ORANGE = "#F59E0B"
-RED = "#DC2626"
-PURPLE = "#7C3AED"
+@st.cache_data(show_spinner=False)
+def load_product_data(path):
 
-
-# ============================================================
-# NUMBER FORMATTING
-# ============================================================
-
-def fmt_num(value):
-
-    value = float(value)
-
-    if abs(value) >= 1_000_000_000:
-        return f"{value / 1_000_000_000:.1f}B"
-
-    if abs(value) >= 1_000_000:
-        return f"{value / 1_000_000:.1f}M"
-
-    if abs(value) >= 1_000:
-        return f"{value / 1_000:.1f}K"
-
-    return f"{value:,.0f}"
-
-
-def fmt_money(value):
-
-    value = float(value)
-
-    if abs(value) >= 1_000_000_000:
-        return f"₹{value / 1_000_000_000:.1f}B"
-
-    if abs(value) >= 1_000_000:
-        return f"₹{value / 1_000_000:.1f}M"
-
-    if abs(value) >= 1_000:
-        return f"₹{value / 1_000:.1f}K"
-
-    return f"₹{value:,.0f}"
-
-
-# ============================================================
-# LOAD SALES DATA
-# ============================================================
-
-@st.cache_data(show_spinner="Loading sales intelligence...") 
-def load_sales_data(path):
-
-    if not os.path.exists(path):
+    if not path.exists():
         return None
 
-    df = pd.read_csv(path)
+    try:
 
-    if "date" in df.columns:
+        df = pd.read_csv(path)
 
-        df["date"] = pd.to_datetime(
-            df["date"],
-            errors="coerce"
-        )
+        return df
 
-    for column in [
-        "total_value",
-        "quantity",
-        "unit_price"
-    ]:
+    except Exception:
 
-        if column in df.columns:
-
-            df[column] = pd.to_numeric(
-                df[column],
-                errors="coerce"
-            ).fillna(0)
-
-    if "sku_id" in df.columns:
-
-        df["sku_id"] = (
-            df["sku_id"]
-            .astype(str)
-        )
-
-    return df
-
-
-# ============================================================
-# LOAD INVENTORY DATA
-# ============================================================
-
-@st.cache_data(show_spinner="Loading inventory intelligence...")
-def load_inventory_data(path):
-
-    if not os.path.exists(path):
         return None
 
-    df = pd.read_csv(path)
 
-    for column in [
-        "stock_on_hand",
-        "reorder_point",
-        "safety_stock",
-        "stock_coverage_days",
-        "avg_daily_demand",
-        "risk_score"
-    ]:
-
-        if column in df.columns:
-
-            df[column] = pd.to_numeric(
-                df[column],
-                errors="coerce"
-            ).fillna(0)
-
-    if "sku_id" in df.columns:
-
-        df["sku_id"] = (
-            df["sku_id"]
-            .astype(str)
-        )
-
-    return df
-
-
-# ============================================================
-# LOAD DATA
-# ============================================================
-
-sales_df = load_sales_data(
-    SALES_PATH
-)
-
-inventory_df = load_inventory_data(
-    INVENTORY_PATH
-)
+product_df = load_product_data(PRODUCT_PATH)
 
 
 # ============================================================
 # DATA VALIDATION
 # ============================================================
 
-if sales_df is None:
+if product_df is None:
 
     st.error(
-        "Sales dataset could not be found."
+        "Product dataset could not be found or loaded."
     )
 
-    st.code(SALES_PATH)
+    st.write("Expected location:")
+
+    st.code(str(PRODUCT_PATH))
 
     st.stop()
 
 
-if "sku_id" not in sales_df.columns:
+required_columns = [
+    "sku_id",
+    "total_quantity",
+    "total_sales",
+    "transactions",
+    "stores",
+    "channels",
+    "first_sale",
+    "last_sale"
+]
+
+
+missing_columns = [
+    column
+    for column in required_columns
+    if column not in product_df.columns
+]
+
+
+if missing_columns:
 
     st.error(
-        "sku_id column is missing from the sales dataset."
+        "The product dataset is missing required columns."
+    )
+
+    st.write(
+        "Missing columns:",
+        missing_columns
+    )
+
+    st.write("Available columns:")
+
+    st.write(
+        product_df.columns.tolist()
     )
 
     st.stop()
 
 
 # ============================================================
-# SIDEBAR
+# DATA PREPARATION
 # ============================================================
 
-with st.sidebar:
+product_df = product_df.copy()
 
-    st.title("🛍️ Retail BI")
-
-    st.caption(
-        "PRODUCT INTELLIGENCE"
-    )
-
-    st.divider()
-
-    st.subheader("Product Selection")
-
-    products = sorted(
-        sales_df["sku_id"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
-    selected_product = st.selectbox(
-        "Select SKU",
-        products
-    )
-
-    st.divider()
-
-    st.caption(
-        "Analysis Modules"
-    )
-
-    st.write("📈 Sales Performance")
-    st.write("📊 Channel Analysis")
-    st.write("🏬 Store Performance")
-    st.write("📦 Inventory Intelligence")
-    st.write("📋 Transaction History")
-
-    st.divider()
-
-    st.caption(
-        f"Available SKUs  •  {len(products):,}"
-    )
-
-
-# ============================================================
-# SELECTED PRODUCT
-# ============================================================
-
-product_sales = sales_df[
-    sales_df["sku_id"] == selected_product
-].copy()
-
-
-if product_sales.empty:
-
-    st.warning(
-        "No sales information is available for this SKU."
-    )
-
-    st.stop()
-
-
-# ============================================================
-# KPI CALCULATIONS
-# ============================================================
-
-total_sales = (
-    product_sales["total_value"].sum()
-    if "total_value"
-    in product_sales.columns
-    else 0
+product_df["sku_id"] = (
+    product_df["sku_id"]
+    .astype(str)
 )
 
+product_df["total_quantity"] = pd.to_numeric(
+    product_df["total_quantity"],
+    errors="coerce"
+).fillna(0)
 
-total_quantity = (
-    product_sales["quantity"].sum()
-    if "quantity"
-    in product_sales.columns
-    else 0
+product_df["total_sales"] = pd.to_numeric(
+    product_df["total_sales"],
+    errors="coerce"
+).fillna(0)
+
+product_df["transactions"] = pd.to_numeric(
+    product_df["transactions"],
+    errors="coerce"
+).fillna(0)
+
+product_df["stores"] = pd.to_numeric(
+    product_df["stores"],
+    errors="coerce"
+).fillna(0)
+
+product_df["channels"] = pd.to_numeric(
+    product_df["channels"],
+    errors="coerce"
+).fillna(0)
+
+product_df["first_sale"] = pd.to_datetime(
+    product_df["first_sale"],
+    errors="coerce"
 )
 
-
-transactions = (
-    product_sales["receipt_id"].nunique()
-    if "receipt_id"
-    in product_sales.columns
-    else len(product_sales)
-)
-
-
-stores = (
-    product_sales["store_id"].nunique()
-    if "store_id"
-    in product_sales.columns
-    else 0
-)
-
-
-channels = (
-    product_sales["channel"].nunique()
-    if "channel"
-    in product_sales.columns
-    else 0
-)
-
-
-average_price = (
-    total_sales / total_quantity
-    if total_quantity > 0
-    else 0
+product_df["last_sale"] = pd.to_datetime(
+    product_df["last_sale"],
+    errors="coerce"
 )
 
 
@@ -371,12 +418,78 @@ average_price = (
 # PAGE HEADER
 # ============================================================
 
-st.title(
-    "🛍️ Product Intelligence"
-)
+st.title("📦 Product Intelligence")
 
 st.caption(
-    f"Detailed performance, demand and inventory analysis for SKU {selected_product}"
+    "Detailed product-level sales, demand and distribution "
+    "analysis across the retail portfolio."
+)
+
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+st.sidebar.title("📦 Product Controls")
+
+st.sidebar.caption(
+    "Select a SKU to explore its performance."
+)
+
+st.sidebar.divider()
+
+
+# ============================================================
+# PRODUCT SELECTION
+# ============================================================
+
+sku_list = sorted(
+    product_df["sku_id"]
+    .dropna()
+    .unique()
+    .tolist()
+)
+
+
+selected_sku = st.sidebar.selectbox(
+    "Select Product",
+    sku_list,
+    index=0
+)
+
+
+# ============================================================
+# SELECT PRODUCT
+# ============================================================
+
+selected_product = product_df[
+    product_df["sku_id"] == selected_sku
+].copy()
+
+
+if selected_product.empty:
+
+    st.warning(
+        "No information is available for the selected SKU."
+    )
+
+    st.stop()
+
+
+product = selected_product.iloc[0]
+
+
+# ============================================================
+# PRODUCT HEADER
+# ============================================================
+
+st.markdown(
+    '<div class="section-title">Product Overview</div>',
+    unsafe_allow_html=True
+)
+
+st.info(
+    f"Showing detailed performance for **{selected_sku}**"
 )
 
 
@@ -384,82 +497,77 @@ st.caption(
 # EXECUTIVE SUMMARY
 # ============================================================
 
-st.subheader(
-    "Executive Summary"
+st.markdown(
+    '<div class="section-title">Executive Summary</div>',
+    unsafe_allow_html=True
+)
+
+st.caption(
+    "Key performance indicators for the selected product."
 )
 
 
-k1, k2, k3, k4, k5 = st.columns(5)
+total_sales = float(
+    product["total_sales"]
+)
+
+total_quantity = float(
+    product["total_quantity"]
+)
+
+total_transactions = int(
+    product["transactions"]
+)
+
+total_stores = int(
+    product["stores"]
+)
+
+total_channels = int(
+    product["channels"]
+)
 
 
-with k1:
-
-    with st.container(border=True):
-
-        st.metric(
-            "Revenue",
-            fmt_money(total_sales)
-        )
-
-        st.caption(
-            "Total product sales"
-        )
+avg_unit_price = (
+    total_sales / total_quantity
+    if total_quantity > 0
+    else 0
+)
 
 
-with k2:
-
-    with st.container(border=True):
-
-        st.metric(
-            "Units Sold",
-            fmt_num(total_quantity)
-        )
-
-        st.caption(
-            "Total quantity sold"
-        )
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 
-with k3:
+with kpi1:
 
-    with st.container(border=True):
-
-        st.metric(
-            "Transactions",
-            fmt_num(transactions)
-        )
-
-        st.caption(
-            "Unique transactions"
-        )
+    st.metric(
+        "💰 Revenue",
+        f"₹{total_sales:,.0f}"
+    )
 
 
-with k4:
+with kpi2:
 
-    with st.container(border=True):
-
-        st.metric(
-            "Stores",
-            fmt_num(stores)
-        )
-
-        st.caption(
-            "Selling locations"
-        )
+    st.metric(
+        "📦 Units Sold",
+        f"{total_quantity:,.0f}"
+    )
 
 
-with k5:
+with kpi3:
 
-    with st.container(border=True):
+    st.metric(
+        "🧾 Transactions",
+        f"{total_transactions:,}"
+    )
 
-        st.metric(
-            "Avg. Unit Price",
-            f"₹{average_price:,.2f}"
-        )
 
-        st.caption(
-            "Revenue per unit"
-        )
+with kpi4:
+
+    st.metric(
+        "🏬 Stores",
+        f"{total_stores:,}"
+    )
 
 
 # ============================================================
@@ -468,618 +576,615 @@ with k5:
 
 st.divider()
 
-st.subheader(
-    "Product Snapshot"
+st.markdown(
+    '<div class="section-title">Product Snapshot</div>',
+    unsafe_allow_html=True
 )
 
 
-s1, s2, s3, s4 = st.columns(4)
+snap1, snap2, snap3, snap4 = st.columns(4)
 
 
-with s1:
+with snap1:
 
-    st.info(
-        f"**SKU**\n\n{selected_product}"
+    st.markdown("**SKU**")
+
+    st.write(
+        selected_sku
     )
 
 
-with s2:
+with snap2:
 
-    st.info(
-        f"**Sales Channels**\n\n{channels:,}"
+    st.markdown("**Sales Channels**")
+
+    st.write(
+        f"{total_channels:,}"
     )
 
 
-with s3:
+with snap3:
 
-    if "date" in product_sales.columns:
+    st.markdown("**First Sale**")
 
-        first_date = (
-            product_sales["date"].min()
-        )
+    if pd.notna(product["first_sale"]):
 
-        first_text = (
-            first_date.strftime("%d %b %Y")
-            if pd.notna(first_date)
-            else "N/A"
+        st.write(
+            product["first_sale"].strftime(
+                "%d %b %Y"
+            )
         )
 
     else:
 
-        first_text = "N/A"
-
-    st.info(
-        f"**First Sale**\n\n{first_text}"
-    )
+        st.write("N/A")
 
 
-with s4:
+with snap4:
 
-    if "date" in product_sales.columns:
+    st.markdown("**Latest Sale**")
 
-        last_date = (
-            product_sales["date"].max()
-        )
+    if pd.notna(product["last_sale"]):
 
-        last_text = (
-            last_date.strftime("%d %b %Y")
-            if pd.notna(last_date)
-            else "N/A"
+        st.write(
+            product["last_sale"].strftime(
+                "%d %b %Y"
+            )
         )
 
     else:
 
-        last_text = "N/A"
-
-    st.info(
-        f"**Latest Sale**\n\n{last_text}"
-    )
+        st.write("N/A")
 
 
 # ============================================================
-# TABS
+# PRODUCT PERFORMANCE
 # ============================================================
 
-tab_sales, tab_channel, tab_store, tab_inventory, tab_data = st.tabs(
-    [
-        "📈 Sales Performance",
-        "📊 Channel Analysis",
-        "🏬 Store Performance",
-        "📦 Inventory",
-        "📋 Transactions"
-    ]
+st.divider()
+
+st.markdown(
+    '<div class="section-title">📈 Sales Performance</div>',
+    unsafe_allow_html=True
+)
+
+st.caption(
+    "Revenue and quantity indicators for the selected product."
+)
+
+
+performance_df = pd.DataFrame(
+    {
+        "Metric": [
+            "Revenue",
+            "Units Sold",
+            "Transactions",
+            "Stores",
+            "Channels"
+        ],
+        "Value": [
+            total_sales,
+            total_quantity,
+            total_transactions,
+            total_stores,
+            total_channels
+        ]
+    }
+)
+
+
+fig_performance = px.bar(
+    performance_df,
+    x="Metric",
+    y="Value",
+    title="Product Performance Overview"
+)
+
+
+fig_performance.update_traces(
+    hovertemplate=
+    "<b>%{x}</b>"
+    "<br>Value: %{y:,.0f}"
+    "<extra></extra>"
+)
+
+
+fig_performance.update_layout(
+    template="plotly_white",
+    height=420,
+
+    margin=dict(
+        l=20,
+        r=20,
+        t=50,
+        b=20
+    ),
+
+    xaxis=dict(
+        title="",
+        showgrid=False
+    ),
+
+    yaxis=dict(
+        title="Value",
+        gridcolor="#EEF2F6",
+        zeroline=False
+    ),
+
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="white"
+)
+
+
+st.plotly_chart(
+    fig_performance,
+    use_container_width=True,
+    config={
+        "displayModeBar": False,
+        "responsive": True
+    }
 )
 
 
 # ============================================================
-# SALES PERFORMANCE
+# REVENUE PERFORMANCE
 # ============================================================
 
-with tab_sales:
+st.divider()
 
-    st.subheader(
-        "Revenue Performance"
-    )
+st.markdown(
+    '<div class="section-title">💰 Revenue Performance</div>',
+    unsafe_allow_html=True
+)
 
-    st.caption(
-        "Historical revenue movement for the selected product"
-    )
-
-    if (
-        "date" in product_sales.columns
-        and "total_value"
-        in product_sales.columns
-    ):
-
-        daily_sales = (
-            product_sales
-            .groupby(
-                "date",
-                as_index=False
-            )["total_value"]
-            .sum()
-            .sort_values("date")
-        )
-
-        fig_sales = px.area(
-            daily_sales,
-            x="date",
-            y="total_value"
-        )
-
-        fig_sales.update_traces(
-            line_color=BLUE,
-            fillcolor="rgba(37,99,235,0.15)"
-        )
-
-        fig_sales.update_layout(
-            template="plotly_white",
-            height=430,
-            margin=dict(
-                l=20,
-                r=20,
-                t=30,
-                b=20
-            ),
-            xaxis_title=None,
-            yaxis_title="Revenue (₹)",
-            hovermode="x unified"
-        )
-
-        st.plotly_chart(
-            fig_sales,
-            use_container_width=True,
-            config={
-                "displayModeBar": False
-            }
-        )
+st.caption(
+    "Revenue contribution of the selected product."
+)
 
 
-    st.subheader(
-        "Demand Trend"
-    )
+revenue_df = pd.DataFrame(
+    {
+        "Metric": [
+            "Total Revenue",
+            "Average Revenue per Unit"
+        ],
+        "Revenue": [
+            total_sales,
+            avg_unit_price
+        ]
+    }
+)
 
-    if (
-        "date" in product_sales.columns
-        and "quantity"
-        in product_sales.columns
-    ):
 
-        daily_quantity = (
-            product_sales
-            .groupby(
-                "date",
-                as_index=False
-            )["quantity"]
-            .sum()
-            .sort_values("date")
-        )
+fig_revenue = px.bar(
+    revenue_df,
+    x="Metric",
+    y="Revenue",
+    title="Revenue Metrics"
+)
 
-        fig_quantity = px.line(
-            daily_quantity,
-            x="date",
-            y="quantity"
-        )
 
-        fig_quantity.update_traces(
-            line_color=TEAL,
-            line_width=3
-        )
+fig_revenue.update_traces(
+    hovertemplate=
+    "<b>%{x}</b>"
+    "<br>₹%{y:,.2f}"
+    "<extra></extra>"
+)
 
-        fig_quantity.update_layout(
-            template="plotly_white",
-            height=350,
-            margin=dict(
-                l=20,
-                r=20,
-                t=20,
-                b=20
-            ),
-            xaxis_title=None,
-            yaxis_title="Units"
-        )
 
-        st.plotly_chart(
-            fig_quantity,
-            use_container_width=True,
-            config={
-                "displayModeBar": False
-            }
-        )
+fig_revenue.update_layout(
+    template="plotly_white",
+    height=400,
+
+    margin=dict(
+        l=20,
+        r=20,
+        t=50,
+        b=20
+    ),
+
+    xaxis=dict(
+        title="",
+        showgrid=False
+    ),
+
+    yaxis=dict(
+        title="Revenue (₹)",
+        gridcolor="#EEF2F6",
+        zeroline=False
+    ),
+
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="white"
+)
+
+
+st.plotly_chart(
+    fig_revenue,
+    use_container_width=True,
+    config={
+        "displayModeBar": False,
+        "responsive": True
+    }
+)
 
 
 # ============================================================
 # CHANNEL ANALYSIS
 # ============================================================
 
-with tab_channel:
+st.divider()
 
-    st.subheader(
-        "Channel Performance"
-    )
+st.markdown(
+    '<div class="section-title">📊 Channel Analysis</div>',
+    unsafe_allow_html=True
+)
 
-    if (
-        "channel"
-        in product_sales.columns
-        and "total_value"
-        in product_sales.columns
-    ):
+st.caption(
+    "Number of sales channels in which the selected SKU is available."
+)
 
-        channel_sales = (
-            product_sales
-            .groupby(
-                "channel",
-                as_index=False
-            )["total_value"]
-            .sum()
-            .sort_values(
-                "total_value",
-                ascending=False
-            )
-        )
 
-        left, right = st.columns(
-            [1.5, 1]
-        )
+channel_df = pd.DataFrame(
+    {
+        "Channel Coverage": [
+            "Active Channels",
+            "Inactive Channels"
+        ],
+        "Count": [
+            total_channels,
+            max(0, 3 - total_channels)
+        ]
+    }
+)
 
-        with left:
 
-            fig_channel = px.bar(
-                channel_sales,
-                x="channel",
-                y="total_value",
-                color="channel",
-                text="total_value",
-                color_discrete_sequence=[
-                    BLUE,
-                    TEAL,
-                    PURPLE,
-                    ORANGE,
-                    RED
-                ]
-            )
+fig_channel = px.pie(
+    channel_df,
+    names="Channel Coverage",
+    values="Count",
+    hole=0.45,
+    title="Channel Coverage"
+)
 
-            fig_channel.update_traces(
-                texttemplate="₹%{y:,.0f}",
-                textposition="outside"
-            )
 
-            fig_channel.update_layout(
-                template="plotly_white",
-                height=450,
-                showlegend=False,
-                xaxis_title=None,
-                yaxis_title="Revenue (₹)"
-            )
+fig_channel.update_traces(
+    hovertemplate=
+    "<b>%{label}</b>"
+    "<br>Channels: %{value}"
+    "<extra></extra>"
+)
 
-            st.plotly_chart(
-                fig_channel,
-                use_container_width=True,
-                config={
-                    "displayModeBar": False
-                }
-            )
 
-        with right:
+fig_channel.update_layout(
+    template="plotly_white",
+    height=400,
 
-            fig_pie = px.pie(
-                channel_sales,
-                names="channel",
-                values="total_value",
-                hole=0.55,
-                color_discrete_sequence=[
-                    BLUE,
-                    TEAL,
-                    PURPLE,
-                    ORANGE,
-                    RED
-                ]
-            )
+    margin=dict(
+        l=20,
+        r=20,
+        t=50,
+        b=20
+    ),
 
-            fig_pie.update_traces(
-                textinfo="percent+label"
-            )
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="white"
+)
 
-            fig_pie.update_layout(
-                template="plotly_white",
-                height=450,
-                showlegend=False
-            )
 
-            st.plotly_chart(
-                fig_pie,
-                use_container_width=True,
-                config={
-                    "displayModeBar": False
-                }
-            )
+st.plotly_chart(
+    fig_channel,
+    use_container_width=True,
+    config={
+        "displayModeBar": False,
+        "responsive": True
+    }
+)
 
 
 # ============================================================
 # STORE PERFORMANCE
 # ============================================================
 
-with tab_store:
-
-    st.subheader(
-        "Store Performance"
-    )
-
-    st.caption(
-        "Top performing stores for the selected SKU"
-    )
-
-    if (
-        "store_id"
-        in product_sales.columns
-        and "total_value"
-        in product_sales.columns
-    ):
-
-        store_sales = (
-            product_sales
-            .groupby(
-                "store_id",
-                as_index=False
-            )["total_value"]
-            .sum()
-            .sort_values(
-                "total_value",
-                ascending=False
-            )
-            .head(20)
-        )
-
-        fig_store = px.bar(
-            store_sales,
-            x="store_id",
-            y="total_value",
-            color="total_value",
-            color_continuous_scale=[
-                "#DBEAFE",
-                BLUE
-            ],
-            text="total_value"
-        )
-
-        fig_store.update_traces(
-            texttemplate="₹%{y:,.0f}",
-            textposition="outside"
-        )
-
-        fig_store.update_layout(
-            template="plotly_white",
-            height=500,
-            coloraxis_showscale=False,
-            xaxis_title="Store",
-            yaxis_title="Revenue (₹)"
-        )
-
-        st.plotly_chart(
-            fig_store,
-            use_container_width=True,
-            config={
-                "displayModeBar": False
-            }
-        )
-
-
-# ============================================================
-# INVENTORY INTELLIGENCE
-# ============================================================
-
-with tab_inventory:
-
-    st.subheader(
-        "Inventory Intelligence"
-    )
-
-    if inventory_df is None:
-
-        st.warning(
-            "Inventory dataset is not available."
-        )
-
-    else:
-
-        product_inventory = inventory_df[
-            inventory_df["sku_id"]
-            == selected_product
-        ].copy()
-
-        if product_inventory.empty:
-
-            st.info(
-                "No inventory information is available for this SKU."
-            )
-
-        else:
-
-            stock = (
-                product_inventory[
-                    "stock_on_hand"
-                ].sum()
-                if "stock_on_hand"
-                in product_inventory.columns
-                else 0
-            )
-
-            reorder = (
-                product_inventory[
-                    "reorder_point"
-                ].sum()
-                if "reorder_point"
-                in product_inventory.columns
-                else 0
-            )
-
-            coverage = (
-                product_inventory[
-                    "stock_coverage_days"
-                ].mean()
-                if "stock_coverage_days"
-                in product_inventory.columns
-                else 0
-            )
-
-            risk = (
-                str(
-                    product_inventory[
-                        "final_risk_level"
-                    ].iloc[0]
-                )
-                if "final_risk_level"
-                in product_inventory.columns
-                else "Not Available"
-            )
-
-
-            i1, i2, i3, i4 = st.columns(4)
-
-
-            with i1:
-
-                st.metric(
-                    "Stock on Hand",
-                    fmt_num(stock)
-                )
-
-
-            with i2:
-
-                st.metric(
-                    "Reorder Point",
-                    fmt_num(reorder)
-                )
-
-
-            with i3:
-
-                st.metric(
-                    "Stock Coverage",
-                    f"{coverage:.1f} days"
-                )
-
-
-            with i4:
-
-                risk_lower = risk.lower()
-
-                if "critical" in risk_lower:
-
-                    st.error(
-                        f"🔴 {risk}"
-                    )
-
-                elif "high" in risk_lower:
-
-                    st.warning(
-                        f"🟠 {risk}"
-                    )
-
-                elif "medium" in risk_lower:
-
-                    st.warning(
-                        f"🟡 {risk}"
-                    )
-
-                else:
-
-                    st.success(
-                        f"🟢 {risk}"
-                    )
-
-
-            st.divider()
-
-            st.subheader(
-                "Stock Position"
-            )
-
-
-            inventory_chart = pd.DataFrame(
-                {
-                    "Metric": [
-                        "Stock on Hand",
-                        "Reorder Point"
-                    ],
-                    "Units": [
-                        stock,
-                        reorder
-                    ]
-                }
-            )
-
-
-            fig_inventory = px.bar(
-                inventory_chart,
-                x="Metric",
-                y="Units",
-                color="Metric",
-                text="Units",
-                color_discrete_sequence=[
-                    TEAL,
-                    ORANGE
-                ]
-            )
-
-
-            fig_inventory.update_traces(
-                texttemplate="%{y:,.0f}",
-                textposition="outside"
-            )
-
-
-            fig_inventory.update_layout(
-                template="plotly_white",
-                height=380,
-                showlegend=False,
-                xaxis_title=None,
-                yaxis_title="Units"
-            )
-
-
-            st.plotly_chart(
-                fig_inventory,
-                use_container_width=True,
-                config={
-                    "displayModeBar": False
-                }
-            )
-
-
-# ============================================================
-# TRANSACTION HISTORY
-# ============================================================
-
-with tab_data:
-
-    st.subheader(
-        "Transaction History"
-    )
-
-    st.caption(
-        "Latest 100 transactions for the selected product"
-    )
-
-
-    display_columns = [
-        "date",
-        "receipt_id",
-        "store_id",
-        "sku_id",
-        "quantity",
-        "unit_price",
-        "total_value",
-        "channel"
-    ]
-
-
-    display_columns = [
-        column
-        for column in display_columns
-        if column in product_sales.columns
-    ]
-
-
-    transactions_df = (
-        product_sales[
-            display_columns
+st.divider()
+
+st.markdown(
+    '<div class="section-title">🏬 Store Performance</div>',
+    unsafe_allow_html=True
+)
+
+st.caption(
+    "Retail footprint of the selected product."
+)
+
+
+store_df = pd.DataFrame(
+    {
+        "Metric": [
+            "Stores Selling Product"
+        ],
+        "Stores": [
+            total_stores
         ]
-        .sort_values(
-            "date",
-            ascending=False
-        )
-        .head(100)
-        .copy()
+    }
+)
+
+
+fig_store = px.bar(
+    store_df,
+    x="Metric",
+    y="Stores",
+    title="Store Coverage"
+)
+
+
+fig_store.update_traces(
+    hovertemplate=
+    "<b>%{x}</b>"
+    "<br>Stores: %{y:,}"
+    "<extra></extra>"
+)
+
+
+fig_store.update_layout(
+    template="plotly_white",
+    height=380,
+
+    margin=dict(
+        l=20,
+        r=20,
+        t=50,
+        b=20
+    ),
+
+    xaxis=dict(
+        title="",
+        showgrid=False
+    ),
+
+    yaxis=dict(
+        title="Number of Stores",
+        gridcolor="#EEF2F6",
+        zeroline=False
+    ),
+
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="white"
+)
+
+
+st.plotly_chart(
+    fig_store,
+    use_container_width=True,
+    config={
+        "displayModeBar": False,
+        "responsive": True
+    }
+)
+
+
+# ============================================================
+# INVENTORY / DEMAND INDICATORS
+# ============================================================
+
+st.divider()
+
+st.markdown(
+    '<div class="section-title">📦 Product Demand Indicators</div>',
+    unsafe_allow_html=True
+)
+
+st.caption(
+    "High-level indicators useful for inventory and demand planning."
+)
+
+
+demand_col1, demand_col2, demand_col3 = st.columns(3)
+
+
+with demand_col1:
+
+    st.metric(
+        "Units Sold",
+        f"{total_quantity:,.0f}"
     )
 
 
-    st.dataframe(
-        transactions_df,
-        use_container_width=True,
-        hide_index=True,
-        height=520
+with demand_col2:
+
+    st.metric(
+        "Transactions",
+        f"{total_transactions:,}"
+    )
+
+
+with demand_col3:
+
+    st.metric(
+        "Revenue / Unit",
+        f"₹{avg_unit_price:,.2f}"
+    )
+
+
+# ============================================================
+# PRODUCT DETAILS TABLE
+# ============================================================
+
+st.divider()
+
+st.markdown(
+    '<div class="section-title">📋 Product Details</div>',
+    unsafe_allow_html=True
+)
+
+st.caption(
+    "Complete aggregated information for the selected SKU."
+)
+
+
+details_df = pd.DataFrame(
+    {
+        "Metric": [
+            "SKU",
+            "Total Revenue",
+            "Total Quantity",
+            "Transactions",
+            "Stores",
+            "Channels",
+            "Average Revenue per Unit",
+            "First Sale",
+            "Latest Sale"
+        ],
+
+        "Value": [
+            selected_sku,
+            f"₹{total_sales:,.2f}",
+            f"{total_quantity:,.0f}",
+            f"{total_transactions:,}",
+            f"{total_stores:,}",
+            f"{total_channels:,}",
+            f"₹{avg_unit_price:,.2f}",
+
+            (
+                product["first_sale"].strftime("%d %b %Y")
+                if pd.notna(product["first_sale"])
+                else "N/A"
+            ),
+
+            (
+                product["last_sale"].strftime("%d %b %Y")
+                if pd.notna(product["last_sale"])
+                else "N/A"
+            )
+        ]
+    }
+)
+
+
+st.dataframe(
+    details_df,
+    use_container_width=True,
+    hide_index=True,
+    height=420
+)
+
+
+# ============================================================
+# TOP PRODUCTS COMPARISON
+# ============================================================
+
+st.divider()
+
+st.markdown(
+    '<div class="section-title">🏆 Top Products by Revenue</div>',
+    unsafe_allow_html=True
+)
+
+st.caption(
+    "Top 10 products across the complete product portfolio."
+)
+
+
+top_products = (
+    product_df
+    .sort_values(
+        "total_sales",
+        ascending=False
+    )
+    .head(10)
+    .copy()
+)
+
+
+fig_top = px.bar(
+    top_products,
+    x="total_sales",
+    y="sku_id",
+    orientation="h",
+    title="Top 10 Products by Revenue"
+)
+
+
+fig_top.update_traces(
+    hovertemplate=
+    "<b>%{y}</b>"
+    "<br>Revenue: ₹%{x:,.0f}"
+    "<extra></extra>"
+)
+
+
+fig_top.update_layout(
+    template="plotly_white",
+    height=450,
+
+    margin=dict(
+        l=20,
+        r=20,
+        t=50,
+        b=20
+    ),
+
+    xaxis=dict(
+        title="Revenue (₹)",
+        gridcolor="#EEF2F6"
+    ),
+
+    yaxis=dict(
+        title="SKU",
+        categoryorder="total ascending"
+    ),
+
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="white"
+)
+
+
+st.plotly_chart(
+    fig_top,
+    use_container_width=True,
+    config={
+        "displayModeBar": False,
+        "responsive": True
+    }
+)
+
+
+# ============================================================
+# PRODUCT PORTFOLIO
+# ============================================================
+
+st.divider()
+
+st.markdown(
+    '<div class="section-title">📊 Product Portfolio</div>',
+    unsafe_allow_html=True
+)
+
+
+portfolio1, portfolio2, portfolio3 = st.columns(3)
+
+
+with portfolio1:
+
+    st.metric(
+        "Total SKUs",
+        f"{product_df['sku_id'].nunique():,}"
+    )
+
+
+with portfolio2:
+
+    st.metric(
+        "Portfolio Revenue",
+        f"₹{product_df['total_sales'].sum():,.0f}"
+    )
+
+
+with portfolio3:
+
+    st.metric(
+        "Portfolio Units",
+        f"{product_df['total_quantity'].sum():,.0f}"
     )
 
 
@@ -1089,18 +1194,13 @@ with tab_data:
 
 st.divider()
 
-footer_left, footer_right = st.columns(2)
-
-
-with footer_left:
-
-    st.caption(
-        "Retail Demand Forecasting • Product Intelligence"
-    )
-
-
-with footer_right:
-
-    st.caption(
-        f"Active SKU: {selected_product}"
-    )
+st.markdown(
+    """
+    <div class="footer-text">
+        Retail Demand Forecasting |
+        Product Intelligence |
+        SKU-Level Analytics
+    </div>
+    """,
+    unsafe_allow_html=True
+)
