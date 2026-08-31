@@ -361,20 +361,13 @@ st.markdown(
 # PROJECT PATH
 # ============================================================
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-)
+from pathlib import Path
 
-DATA_PATH = os.path.join(
-    BASE_DIR,
-    "data",
-    "processed",
-    "inventory_risk_scoring.csv"
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+DEPLOYMENT_PATH = PROJECT_ROOT / "data" / "deployment"
+
+DATA_PATH = DEPLOYMENT_PATH / "inventory_risk_scoring.csv"
 
 
 # ============================================================

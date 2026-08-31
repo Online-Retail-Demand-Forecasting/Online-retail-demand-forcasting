@@ -198,38 +198,27 @@ st.markdown(
 # PROJECT PATHS
 # ============================================================
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-)
+# ============================================================
+# PROJECT PATHS
+# ============================================================
 
-DEPLOYMENT_PATH = os.path.join(
-    BASE_DIR,
-    "data",
-    "deployment"
-)
+from pathlib import Path
 
-SALES_PATH = os.path.join(
-    DEPLOYMENT_PATH,
-    "product_sales_dashboard.csv"
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-FORECAST_PATH = os.path.join(
-    DEPLOYMENT_PATH,
-    "demand_forecast_results.csv"
-)
+DEPLOYMENT_PATH = PROJECT_ROOT / "data" / "deployment"
 
-INVENTORY_PATH = os.path.join(
-    DEPLOYMENT_PATH,
-    "inventory_risk_scoring.csv"
-)
+SALES_PATH = DEPLOYMENT_PATH / "daily_sales_dashboard.csv"
+
+FORECAST_PATH = DEPLOYMENT_PATH / "demand_forecast_results.csv"
+
+INVENTORY_PATH = DEPLOYMENT_PATH / "inventory_risk_scoring.csv"
+
 
 # ============================================================
 # SIDEBAR
 # ============================================================
+
 
 st.sidebar.title("📈 Retail Intelligence")
 
